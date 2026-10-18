@@ -1,0 +1,6 @@
+{
+  "name": "Trilha de Estudos RACAN",
+  "description": "Hub integral de conhecimento RACAN: Certificações de TI, Data Science e IA, Ethical Hacking, Mentoria RACAN, Business Technology e Canal do YouTube com anotações, links, simulados e cronogramas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
