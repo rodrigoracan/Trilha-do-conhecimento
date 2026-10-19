@@ -7,7 +7,6 @@ import {
 } from './Logos';
 import {
   ExternalLink,
-  Timer,
   Award,
   Database,
   Sparkles
@@ -18,8 +17,8 @@ interface ToolsMenuBarProps {
   onOpenGoogleClassroomModal: () => void;
   onOpenGeminiChat: () => void;
   onOpenNotebookGemini: () => void;
-  onTogglePomodoro: () => void;
-  isPomodoroOpen: boolean;
+  onTogglePomodoro?: () => void;
+  isPomodoroOpen?: boolean;
   weeklyHoursLogged?: number;
   onOpenSimuladosModal?: () => void;
   onOpenDatabaseModal?: () => void;
@@ -31,9 +30,6 @@ export const ToolsMenuBar: React.FC<ToolsMenuBarProps> = ({
   onOpenGoogleClassroomModal,
   onOpenGeminiChat,
   onOpenNotebookGemini,
-  onTogglePomodoro,
-  isPomodoroOpen,
-  weeklyHoursLogged = 0,
   onOpenSimuladosModal,
   onOpenDatabaseModal,
   theme = 'light',
@@ -42,54 +38,59 @@ export const ToolsMenuBar: React.FC<ToolsMenuBarProps> = ({
 
   return (
     <div
-      className={`w-full px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl transition-all duration-200 ${
+      className={`w-full px-3.5 py-2.5 rounded-2xl border-2 transition-all duration-200 ${
         isLight
-          ? 'bg-gradient-to-r from-sky-100/60 via-sky-50/50 to-blue-100/60 border border-sky-300/70 shadow-xs'
-          : 'bg-gradient-to-r from-[#091629] via-[#0b1c34] to-[#091629] border border-sky-900/40 shadow-xs'
+          ? 'bg-gradient-to-r from-[#e2f7f1] via-[#e5f5fb] to-[#e4eefe] border-[#34d399] shadow-lg shadow-teal-900/10'
+          : 'bg-gradient-to-r from-[#0d2825] via-[#0f312e] to-[#0d272d] border-[#10b981]/70 shadow-2xl shadow-black/60'
       }`}
     >
-      <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
-        {/* Left Side: Compact Category Indicator */}
-        <div className="flex items-center gap-1.5 shrink-0 py-0.5 pr-1">
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        {/* Left Side: Prominent Category Indicator */}
+        <div className="flex items-center gap-2 shrink-0 py-0.5 pr-2">
           <div
-            className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
+            className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border shadow-xs ${
               isLight
-                ? 'bg-white text-sky-700 shadow-2xs border border-sky-200'
-                : 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                ? 'bg-emerald-600 border-emerald-500 text-white'
+                : 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300'
             }`}
           >
-            <Sparkles className="w-3 h-3" />
+            <Sparkles className="w-3.5 h-3.5" />
           </div>
-          <span className={`text-xs font-black tracking-tight ${isLight ? 'text-sky-950' : 'text-white'}`}>
-            Ferramentas & Integrações
-          </span>
+          <div>
+            <span className={`text-xs font-black tracking-tight block leading-none ${isLight ? 'text-emerald-950' : 'text-emerald-100'}`}>
+              Ferramentas & Integrações
+            </span>
+            <span className={`text-[10px] font-semibold leading-none ${isLight ? 'text-emerald-800' : 'text-emerald-400/80'}`}>
+              Acesso rápido e integrado
+            </span>
+          </div>
         </div>
 
-        {/* Right Side: Compact, Frameless, Flexible Tools Strip - Never cut off */}
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 flex-1 justify-start sm:justify-end">
+        {/* Right Side: Compact, Unframed, Never-Cut-Off Tools Strip (Pomodoro removed) */}
+        <div className="flex flex-wrap items-center gap-2 flex-1 justify-start sm:justify-end">
           {/* 1. Google Classroom */}
           <div
-            className={`inline-flex items-center rounded-lg text-xs transition cursor-pointer border shadow-2xs group ${
+            className={`inline-flex items-center rounded-xl text-xs transition cursor-pointer border-2 shadow-sm group ${
               isLight
-                ? 'bg-white hover:bg-emerald-50 text-slate-800 border-emerald-300 hover:border-emerald-400'
-                : 'bg-[#09172c] hover:bg-[#0d2342] text-slate-100 border-emerald-500/40 hover:border-emerald-400'
+                ? 'bg-white hover:bg-emerald-50 text-slate-900 border-emerald-400 hover:border-emerald-600'
+                : 'bg-[#091b22] hover:bg-[#0d2833] text-emerald-100 border-emerald-500/60 hover:border-emerald-400'
             }`}
             title="Google Classroom: Turmas, Atividades e Exercícios"
           >
             <button
               onClick={onOpenGoogleClassroomModal}
-              className="px-2.5 py-1.5 font-bold flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-1.5 font-extrabold flex items-center gap-1.5 cursor-pointer"
             >
               <GoogleClassroomLogo className="w-4 h-4 shrink-0" />
-              <span className="font-extrabold">Classroom</span>
+              <span>Classroom</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </button>
             <a
               href="https://classroom.google.com"
               target="_blank"
               rel="noreferrer"
-              className={`p-1.5 pr-2 transition opacity-70 hover:opacity-100 ${
-                isLight ? 'text-slate-500 hover:text-emerald-700' : 'text-slate-400 hover:text-white'
+              className={`p-1.5 pr-2.5 transition opacity-70 hover:opacity-100 ${
+                isLight ? 'text-slate-500 hover:text-emerald-700' : 'text-emerald-400 hover:text-white'
               }`}
               title="Abrir classroom.google.com em nova aba"
             >
@@ -100,41 +101,41 @@ export const ToolsMenuBar: React.FC<ToolsMenuBarProps> = ({
           {/* 2. Google Drive */}
           <button
             onClick={onOpenGoogleDriveModal}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border shadow-2xs group ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer border-2 shadow-sm group ${
               isLight
-                ? 'bg-white hover:bg-sky-50 text-slate-800 border-sky-300 hover:border-sky-400'
-                : 'bg-[#09172c] hover:bg-[#0d2342] text-slate-100 border-sky-500/40 hover:border-sky-400'
+                ? 'bg-white hover:bg-sky-50 text-slate-900 border-sky-400 hover:border-sky-600'
+                : 'bg-[#09172c] hover:bg-[#0d2342] text-sky-100 border-sky-500/60 hover:border-sky-400'
             }`}
             title="Abrir Central de Materiais e Arquivos do Google Drive"
           >
             <GoogleDriveLogo className="w-4 h-4 shrink-0" />
-            <span className="font-extrabold">Drive</span>
+            <span>Drive</span>
             <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
           </button>
 
           {/* 3. Gemini AI */}
           <div
-            className={`inline-flex items-center rounded-lg text-xs transition cursor-pointer border shadow-2xs group ${
+            className={`inline-flex items-center rounded-xl text-xs transition cursor-pointer border-2 shadow-sm group ${
               isLight
-                ? 'bg-white hover:bg-blue-50 text-slate-800 border-blue-300 hover:border-blue-400'
-                : 'bg-[#09172c] hover:bg-[#0d2342] text-slate-100 border-blue-500/40 hover:border-blue-400'
+                ? 'bg-white hover:bg-blue-50 text-slate-900 border-blue-400 hover:border-blue-600'
+                : 'bg-[#0b1b36] hover:bg-[#10274e] text-blue-100 border-blue-500/60 hover:border-blue-400'
             }`}
             title="Gemini AI: Dúvidas, Roteiros e Perguntas"
           >
             <button
               onClick={onOpenGeminiChat}
-              className="px-2.5 py-1.5 font-bold flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-1.5 font-extrabold flex items-center gap-1.5 cursor-pointer"
             >
-              <GoogleGeminiLogo className="w-4 h-4 shrink-0 text-sky-500" />
-              <span className="font-extrabold">Gemini AI</span>
+              <GoogleGeminiLogo className="w-4 h-4 shrink-0 text-blue-500" />
+              <span>Gemini AI</span>
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
             </button>
             <a
               href="https://gemini.google.com"
               target="_blank"
               rel="noreferrer"
-              className={`p-1.5 pr-2 transition opacity-70 hover:opacity-100 ${
-                isLight ? 'text-slate-500 hover:text-blue-700' : 'text-slate-400 hover:text-white'
+              className={`p-1.5 pr-2.5 transition opacity-70 hover:opacity-100 ${
+                isLight ? 'text-slate-500 hover:text-blue-700' : 'text-blue-300 hover:text-white'
               }`}
               title="Abrir gemini.google.com em nova aba"
             >
@@ -142,29 +143,29 @@ export const ToolsMenuBar: React.FC<ToolsMenuBarProps> = ({
             </a>
           </div>
 
-          {/* 4. NotebookLM with Official Logo */}
+          {/* 4. NotebookLM with Official Arch Logo */}
           <div
-            className={`inline-flex items-center rounded-lg text-xs transition cursor-pointer border shadow-2xs group ${
+            className={`inline-flex items-center rounded-xl text-xs transition cursor-pointer border-2 shadow-sm group ${
               isLight
-                ? 'bg-white hover:bg-purple-50 text-slate-800 border-purple-300 hover:border-purple-400'
-                : 'bg-[#09172c] hover:bg-[#0d2342] text-slate-100 border-purple-500/40 hover:border-purple-400'
+                ? 'bg-white hover:bg-purple-50 text-slate-900 border-purple-400 hover:border-purple-600'
+                : 'bg-[#18102e] hover:bg-[#231742] text-purple-100 border-purple-500/60 hover:border-purple-400'
             }`}
-            title="NotebookLM: Caderno de Livros, Fontes e Scripts"
+            title="NotebookLM / Gemini Notebook: Caderno de Livros, Fontes e Scripts"
           >
             <button
               onClick={onOpenNotebookGemini}
-              className="px-2.5 py-1.5 font-bold flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-1.5 font-extrabold flex items-center gap-1.5 cursor-pointer"
             >
               <NotebookLMLogo className="w-4 h-4 shrink-0" />
-              <span className="font-extrabold">NotebookLM</span>
+              <span>NotebookLM</span>
               <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
             </button>
             <a
               href="https://notebooklm.google.com"
               target="_blank"
               rel="noreferrer"
-              className={`p-1.5 pr-2 transition opacity-70 hover:opacity-100 ${
-                isLight ? 'text-slate-500 hover:text-purple-700' : 'text-slate-400 hover:text-white'
+              className={`p-1.5 pr-2.5 transition opacity-70 hover:opacity-100 ${
+                isLight ? 'text-slate-500 hover:text-purple-700' : 'text-purple-300 hover:text-white'
               }`}
               title="Abrir notebooklm.google.com em nova aba"
             >
@@ -172,62 +173,35 @@ export const ToolsMenuBar: React.FC<ToolsMenuBarProps> = ({
             </a>
           </div>
 
-          {/* 5. Pomodoro Focus Clock */}
-          <button
-            onClick={onTogglePomodoro}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border shadow-2xs ${
-              isPomodoroOpen
-                ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-sm font-black'
-                : isLight
-                ? 'bg-white hover:bg-amber-50 text-slate-800 border-amber-300 hover:border-amber-400'
-                : 'bg-[#09172c] hover:bg-[#0d2342] text-slate-100 border-amber-500/40 hover:border-amber-400'
-            }`}
-            title="Ativar / Desativar Relógio Pomodoro de Foco"
-          >
-            <Timer className={`w-4 h-4 shrink-0 ${isPomodoroOpen ? 'text-slate-950 animate-spin-slow' : 'text-amber-500'}`} />
-            <span className="font-extrabold">Pomodoro</span>
-            <span
-              className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold leading-none ${
-                isPomodoroOpen
-                  ? 'bg-slate-950 text-amber-300'
-                  : isLight
-                  ? 'bg-amber-100 text-amber-900 border border-amber-200'
-                  : 'bg-amber-950/60 text-amber-300 border border-amber-800/40'
-              }`}
-            >
-              {isPomodoroOpen ? 'Ativo' : `${weeklyHoursLogged}h`}
-            </span>
-          </button>
-
-          {/* 6. Simulados */}
+          {/* 5. Simulados */}
           {onOpenSimuladosModal && (
             <button
               onClick={onOpenSimuladosModal}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border shadow-2xs ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer border-2 shadow-sm ${
                 isLight
-                  ? 'bg-white hover:bg-teal-50 text-slate-800 border-teal-300 hover:border-teal-400'
-                  : 'bg-[#09172c] hover:bg-[#0d2342] text-slate-100 border-teal-500/40 hover:border-teal-400'
+                  ? 'bg-white hover:bg-teal-50 text-slate-900 border-teal-400 hover:border-teal-600'
+                  : 'bg-[#082020] hover:bg-[#0c2f2f] text-teal-100 border-teal-500/60 hover:border-teal-400'
               }`}
               title="Abrir Simulados e Questões de Certificação"
             >
               <Award className="w-4 h-4 text-teal-500 shrink-0" />
-              <span className="font-extrabold">Simulados</span>
+              <span>Simulados</span>
             </button>
           )}
 
-          {/* 7. Backup & Database */}
+          {/* 6. Backup & Database */}
           {onOpenDatabaseModal && (
             <button
               onClick={onOpenDatabaseModal}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border shadow-2xs ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer border-2 shadow-sm ${
                 isLight
-                  ? 'bg-white hover:bg-indigo-50 text-slate-800 border-indigo-300 hover:border-indigo-400'
-                  : 'bg-[#09172c] hover:bg-[#0d2342] text-slate-100 border-indigo-500/40 hover:border-indigo-400'
+                  ? 'bg-white hover:bg-indigo-50 text-slate-900 border-indigo-400 hover:border-indigo-600'
+                  : 'bg-[#121330] hover:bg-[#1a1c44] text-indigo-100 border-indigo-500/60 hover:border-indigo-400'
               }`}
               title="Abrir Backup e Exportação do Banco de Dados"
             >
               <Database className="w-4 h-4 text-indigo-500 shrink-0" />
-              <span className="font-extrabold">Backup</span>
+              <span>Backup</span>
             </button>
           )}
         </div>

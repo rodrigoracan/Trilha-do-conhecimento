@@ -7,7 +7,8 @@ import {
   AppConfig,
   StudySession,
   KnowledgeTrack,
-  NotebookBook
+  NotebookBook,
+  PlannedStudyTask
 } from '../types';
 import {
   initialCertifications,
@@ -34,6 +35,7 @@ export interface AppDatabase {
   flashcards: ActiveRecallCard[];
   studySessions: StudySession[];
   notebooks: NotebookBook[];
+  plannedTasks?: PlannedStudyTask[];
   userGeminiApiKey?: string;
 }
 
@@ -112,6 +114,7 @@ export function loadDatabase(): AppDatabase {
       flashcards: parsed.flashcards || initialFlashcards,
       studySessions: parsed.studySessions || [],
       notebooks: parsed.notebooks?.length ? parsed.notebooks : initialNotebooks,
+      plannedTasks: parsed.plannedTasks || [],
       userGeminiApiKey: parsed.userGeminiApiKey || '',
     };
 
@@ -146,6 +149,7 @@ export function getDefaultDatabase(): AppDatabase {
     flashcards: initialFlashcards,
     studySessions: [],
     notebooks: initialNotebooks,
+    plannedTasks: [],
     userGeminiApiKey: '',
   };
 }

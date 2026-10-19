@@ -63,32 +63,50 @@ export const GoogleGeminiLogo: React.FC<{ className?: string }> = ({ className =
 );
 
 /**
- * Official Google NotebookLM Logo
- * Multi-colored orbital vortex/swirl in Google AI identity palette
+ * Official Google Gemini Notebook / NotebookLM Logo
+ * Concentric nested arches with purple-to-blue-to-cyan gradient
  */
 export const NotebookLMLogo: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="24" height="24" rx="6" fill="#1F2328" />
+  <svg viewBox="0 0 32 32" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="notebooklm-outer-grad" x1="0%" y1="100%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#818cf8" />
+        <stop offset="25%" stopColor="#6366f1" />
+        <stop offset="60%" stopColor="#2563eb" />
+        <stop offset="100%" stopColor="#38bdf8" />
+      </linearGradient>
+      <linearGradient id="notebooklm-mid-grad" x1="0%" y1="100%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#a78bfa" />
+        <stop offset="35%" stopColor="#3b82f6" />
+        <stop offset="100%" stopColor="#60a5fa" />
+      </linearGradient>
+      <linearGradient id="notebooklm-inner-grad" x1="0%" y1="100%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#c4b5fd" />
+        <stop offset="45%" stopColor="#60a5fa" />
+        <stop offset="100%" stopColor="#93c5fd" />
+      </linearGradient>
+    </defs>
+    {/* Outer Arch */}
     <path
-      d="M12 4.5C7.858 4.5 4.5 7.858 4.5 12C4.5 16.142 7.858 19.5 12 19.5C16.142 19.5 19.5 16.142 19.5 12"
-      stroke="#4285F4"
-      strokeWidth="2.1"
+      d="M5 26.5 V15 C5 8.925 9.925 4 16 4 C22.075 4 27 8.925 27 15 V26.5"
+      stroke="url(#notebooklm-outer-grad)"
+      strokeWidth="3.2"
       strokeLinecap="round"
     />
+    {/* Middle Arch */}
     <path
-      d="M12 7.4C9.46 7.4 7.4 9.46 7.4 12C7.4 14.54 9.46 16.6 12 16.6C14.54 16.6 16.6 14.54 16.6 12"
-      stroke="#EA4335"
-      strokeWidth="1.9"
+      d="M9.5 26.5 V15.5 C9.5 11.91 12.41 9 16 9 C19.59 9 22.5 11.91 22.5 15.5 V26.5"
+      stroke="url(#notebooklm-mid-grad)"
+      strokeWidth="2.8"
       strokeLinecap="round"
     />
+    {/* Inner Arch */}
     <path
-      d="M12 9.8C10.785 9.8 9.8 10.785 9.8 12C9.8 13.215 10.785 14.2 12 14.2C13.215 14.2 14.2 13.215 14.2 12"
-      stroke="#FBBC05"
-      strokeWidth="1.6"
+      d="M13.8 26.5 V16 C13.8 14.785 14.785 13.8 16 13.8 C17.215 13.8 18.2 14.785 18.2 16 V26.5"
+      stroke="url(#notebooklm-inner-grad)"
+      strokeWidth="2.4"
       strokeLinecap="round"
     />
-    <circle cx="12" cy="12" r="1.3" fill="#34A853" />
-    <circle cx="17.8" cy="7.2" r="1.4" fill="#C084FC" />
   </svg>
 );
 

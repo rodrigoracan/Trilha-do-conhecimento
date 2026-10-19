@@ -109,6 +109,19 @@ export interface StudySession {
   mode: 'focus' | 'short_break' | 'long_break';
 }
 
+export interface PlannedStudyTask {
+  id: string;
+  title: string;
+  date: string; // YYYY-MM-DD
+  durationMinutes: number;
+  timeString?: string; // ex: "1h", "45 min"
+  trackId?: string;
+  trackTitle?: string;
+  completed: boolean;
+  notes?: string;
+  createdAt: string;
+}
+
 export interface ActiveRecallCard {
   id: string;
   certificationId: string;

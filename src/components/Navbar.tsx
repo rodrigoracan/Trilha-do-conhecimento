@@ -9,13 +9,14 @@ import {
   CheckSquare
 } from 'lucide-react';
 
-export type ActiveTab = 'tracks' | 'certs' | 'pomodoro' | 'techniques' | 'notes' | 'reminders';
+export type ActiveTab = 'tracks' | 'planner' | 'certs' | 'pomodoro' | 'techniques' | 'notes' | 'reminders';
 
 interface NavbarProps {
   activeTab: ActiveTab;
   onSelectTab: (tab: ActiveTab) => void;
   pendingRemindersCount: number;
   notesCount: number;
+  plannedTasksCount?: number;
   theme?: 'light' | 'dark';
 }
 
@@ -24,6 +25,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectTab,
   pendingRemindersCount,
   notesCount,
+  plannedTasksCount = 0,
   theme = 'light',
 }) => {
   const isLight = theme === 'light';
@@ -34,6 +36,12 @@ export const Navbar: React.FC<NavbarProps> = ({
       label: 'Trilhas RACAN',
       icon: LayoutGrid,
       badge: 'Hub',
+    },
+    {
+      id: 'planner' as ActiveTab,
+      label: 'Planejamento de Estudos',
+      icon: Calendar,
+      badge: plannedTasksCount > 0 ? String(plannedTasksCount) : null,
     },
     {
       id: 'certs' as ActiveTab,
@@ -69,10 +77,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <nav
-      className={`flex items-center gap-2 overflow-x-auto p-2 rounded-2xl text-xs sm:text-[13px] select-none transition-all duration-200 ${
+      className={`flex items-center gap-2 overflow-x-auto p-2.5 rounded-2xl text-xs sm:text-[13px] select-none transition-all duration-200 border-2 ${
         isLight
-          ? 'bg-gradient-to-r from-[#deedfc] via-[#e8f3fd] to-[#deedfc] border-2 border-[#71a4e8] shadow-md shadow-sky-900/10'
-          : 'bg-gradient-to-r from-[#0d1d36] via-[#102444] to-[#0d1d36] border-2 border-[#1d3d6e] shadow-lg shadow-[#050f1d]/40'
+          ? 'bg-gradient-to-r from-[#eef2ff] via-[#f5f3ff] to-[#eef2ff] border-indigo-400 shadow-lg shadow-indigo-950/10'
+          : 'bg-gradient-to-r from-[#141838] via-[#1b204c] to-[#141838] border-indigo-500/80 shadow-2xl shadow-black/70'
       }`}
     >
       {navItems.map((item) => {
@@ -83,25 +91,23 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             key={item.id}
             onClick={() => onSelectTab(item.id)}
-            className={`px-4 py-2.5 rounded-xl font-semibold flex items-center gap-2 whitespace-nowrap transition-all duration-150 cursor-pointer ${
+            className={`px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 whitespace-nowrap transition-all duration-150 cursor-pointer ${
               isActive
                 ? isLight
-                  ? 'bg-white text-sky-950 font-extrabold shadow-md shadow-sky-900/15 border-2 border-sky-500 scale-[1.01]'
-                  : 'bg-gradient-to-r from-sky-600 to-blue-600 text-white font-bold shadow-md shadow-sky-500/30 border border-sky-300'
+                  ? 'bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 text-white font-black shadow-lg shadow-indigo-600/30 border-2 border-indigo-300 scale-[1.02]'
+                  : 'bg-gradient-to-r from-indigo-500 via-blue-500 to-sky-500 text-white font-black shadow-lg shadow-indigo-500/50 border-2 border-indigo-300 scale-[1.02]'
                 : isLight
-                ? 'text-slate-700 hover:text-slate-950 hover:bg-white/70 border border-transparent font-medium'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent hover:border-slate-700/60'
+                ? 'text-slate-800 hover:text-indigo-950 hover:bg-white font-extrabold border border-transparent hover:border-indigo-200/80 shadow-2xs'
+                : 'text-indigo-200 hover:text-white hover:bg-indigo-950/80 font-bold border border-transparent hover:border-indigo-500/40'
             }`}
           >
             <Icon
-              className={`w-4 h-4 ${
+              className={`w-4 h-4 shrink-0 ${
                 isActive
-                  ? isLight
-                    ? 'text-sky-600'
-                    : 'text-white'
+                  ? 'text-white'
                   : isLight
-                  ? 'text-sky-700'
-                  : 'text-slate-400'
+                  ? 'text-indigo-600'
+                  : 'text-indigo-400'
               }`}
             />
             <span>{item.label}</span>
@@ -109,12 +115,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-md font-mono font-bold transition ${
                   isActive
-                    ? isLight
-                      ? 'bg-sky-100 text-sky-900 border border-sky-300 font-extrabold'
-                      : 'bg-white/20 text-white border border-white/30'
+                    ? 'bg-white/20 text-white border border-white/30'
                     : isLight
-                    ? 'bg-white text-sky-800 border border-sky-300 shadow-2xs'
-                    : 'bg-slate-950 text-sky-300 border border-sky-900/50'
+                    ? 'bg-indigo-100 text-indigo-900 border border-indigo-300 shadow-2xs font-extrabold'
+                    : 'bg-[#0b0f24] text-indigo-300 border border-indigo-800/60'
                 }`}
               >
                 {item.badge}

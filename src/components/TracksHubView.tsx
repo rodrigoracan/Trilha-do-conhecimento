@@ -333,32 +333,32 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
 
   return (
     <div className="space-y-5 animate-fadeIn">
-      {/* Realigned Control Bar with Distinct Contour Outline */}
+      {/* Distinct Prominent Control Bar with High Contrast Outline */}
       <div
-        className={`flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 p-3.5 sm:p-4 rounded-2xl border-2 transition-colors ${
+        className={`flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 p-3.5 sm:p-4 rounded-2xl border-2 transition-all ${
           isLight
-            ? 'bg-[#e5f0fc] border-[#8cb7ea] shadow-md shadow-sky-900/5'
-            : 'bg-[#0a1528] border-slate-800/90 shadow-md'
+            ? 'bg-gradient-to-r from-[#faf5ff] via-[#f3e8ff] to-[#f5f3ff] border-purple-400 shadow-lg shadow-purple-950/10'
+            : 'bg-gradient-to-r from-[#1d1238] via-[#26174a] to-[#1d1238] border-purple-500/80 shadow-2xl shadow-black/70'
         }`}
       >
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? 'text-sky-700' : 'text-slate-400'}`} />
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? 'text-purple-700' : 'text-purple-300'}`} />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Pesquisar trilha, módulo, vídeo ou anotação..."
-            className={`w-full pl-10 pr-4 py-2 rounded-xl text-xs sm:text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/40 ${
+            className={`w-full pl-10 pr-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-purple-500/40 ${
               isLight
-                ? 'bg-white border-2 border-sky-300 text-slate-900 placeholder-slate-400 focus:border-sky-500 shadow-2xs'
-                : 'bg-[#09152a] border border-slate-700/80 text-white placeholder-slate-400 focus:border-sky-500'
+                ? 'bg-white border-2 border-purple-300 text-slate-900 placeholder-slate-400 focus:border-purple-600 shadow-2xs'
+                : 'bg-[#100824] border-2 border-purple-500/60 text-white placeholder-slate-400 focus:border-purple-400'
             }`}
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm('')}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs hover:opacity-100 ${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-400 hover:text-white'}`}
+              className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs hover:opacity-100 ${isLight ? 'text-purple-400 hover:text-purple-700' : 'text-slate-400 hover:text-white'}`}
             >
               ✕
             </button>
@@ -368,19 +368,19 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
         {/* Category Filter Chips & Add Track Action */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
-            <Filter className={`w-3.5 h-3.5 mr-0.5 shrink-0 ${isLight ? 'text-sky-700' : 'text-slate-500'}`} />
+            <Filter className={`w-3.5 h-3.5 mr-0.5 shrink-0 ${isLight ? 'text-purple-700' : 'text-purple-400'}`} />
             {categories.map((cat) => {
               const isSelected = selectedCategory === cat.id;
               return (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border-2 ${
                     isSelected
-                      ? 'bg-sky-600 text-white font-bold shadow-xs border-sky-400'
+                      ? 'bg-purple-600 text-white font-black shadow-md shadow-purple-600/30 border-purple-400 scale-[1.02]'
                       : isLight
-                      ? 'bg-white/80 text-slate-800 hover:bg-white border-sky-200/90'
-                      : 'bg-[#071120] text-slate-300 hover:text-white hover:bg-slate-800 border-slate-700/60'
+                      ? 'bg-white hover:bg-purple-100/70 text-purple-950 border-purple-300 font-extrabold shadow-2xs'
+                      : 'bg-[#140b28] text-purple-200 hover:text-white hover:bg-purple-900/60 border-purple-500/40'
                   }`}
                 >
                   {cat.label}
@@ -392,7 +392,7 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
           {/* Add Track Action */}
           <button
             onClick={onOpenCreateTrackModal}
-            className="btn-3d-primary px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-md shrink-0 ml-auto"
+            className="btn-3d-primary px-3.5 py-1.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow-md shrink-0 ml-auto"
           >
             <Plus className="w-4 h-4" />
             <span>Nova Trilha de Estudo</span>
@@ -451,7 +451,7 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
 
               <div className="p-5 flex-1 flex flex-col justify-between">
                 <div>
-                  {/* Header with Icon, Category Badge & Target */}
+                  {/* Header with Icon, Category Badge (18 Meses removed) */}
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-3">
                       <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${themeStyles.iconBox} group-hover:scale-105 transition-transform`}>
@@ -461,11 +461,6 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
                         <span className={`inline-block px-2.5 py-0.5 rounded-md text-[11px] ${themeStyles.badgeBg}`}>
                           {track.category}
                         </span>
-                        {isCertHub && (
-                          <span className="ml-1.5 inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
-                            18 Meses
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>

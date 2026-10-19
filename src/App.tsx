@@ -13,6 +13,7 @@ import {
   StudySession,
   ExternalResource,
   KnowledgeTrack,
+  PlannedStudyTask,
 } from './types';
 import {
   loadDatabase,
@@ -30,6 +31,7 @@ import { PomodoroView } from './components/PomodoroView';
 import { StudyTechniquesView } from './components/StudyTechniquesView';
 import { NotesView } from './components/NotesView';
 import { RemindersView } from './components/RemindersView';
+import { StudyPlannerCalendarView } from './components/StudyPlannerCalendarView';
 import { CertEditModal } from './components/CertEditModal';
 import { AddExternalResourceModal } from './components/AddExternalResourceModal';
 import { DatabaseModal } from './components/DatabaseModal';
@@ -508,6 +510,46 @@ export default function App() {
     }));
   };
 
+  // --- STUDY PLANNER / CALENDAR TASKS ---
+  const handleAddPlannedTask = (
+    taskData: Omit<PlannedStudyTask, 'id' | 'createdAt'>
+  ) => {
+    const newTask: PlannedStudyTask = {
+      ...taskData,
+      id: `task-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    updateDbAndPersist((prev) => ({
+      ...prev,
+      plannedTasks: [newTask, ...(prev.plannedTasks || [])],
+    }));
+  };
+
+  const handleUpdatePlannedTask = (updatedTask: PlannedStudyTask) => {
+    updateDbAndPersist((prev) => ({
+      ...prev,
+      plannedTasks: (prev.plannedTasks || []).map((t) =>
+        t.id === updatedTask.id ? updatedTask : t
+      ),
+    }));
+  };
+
+  const handleDeletePlannedTask = (taskId: string) => {
+    updateDbAndPersist((prev) => ({
+      ...prev,
+      plannedTasks: (prev.plannedTasks || []).filter((t) => t.id !== taskId),
+    }));
+  };
+
+  const handleTogglePlannedTask = (taskId: string) => {
+    updateDbAndPersist((prev) => ({
+      ...prev,
+      plannedTasks: (prev.plannedTasks || []).map((t) =>
+        t.id === taskId ? { ...t, completed: !t.completed } : t
+      ),
+    }));
+  };
+
   // Calculations for banner & stats
   const pendingRemindersCount = database.reminders.filter((r) => !r.completed).length;
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -578,6 +620,7 @@ export default function App() {
           onSelectTab={setActiveTab}
           pendingRemindersCount={pendingRemindersCount}
           notesCount={database.notes.length}
+          plannedTasksCount={(database.plannedTasks || []).filter((t) => !t.completed).length}
           theme={theme}
         />
 
@@ -626,6 +669,19 @@ export default function App() {
                 theme={theme}
               />
             )
+          )}
+
+          {activeTab === 'planner' && (
+            <StudyPlannerCalendarView
+              plannedTasks={database.plannedTasks || []}
+              tracks={database.knowledgeTracks || []}
+              certifications={database.certifications}
+              onAddPlannedTask={handleAddPlannedTask}
+              onUpdatePlannedTask={handleUpdatePlannedTask}
+              onDeletePlannedTask={handleDeletePlannedTask}
+              onTogglePlannedTask={handleTogglePlannedTask}
+              theme={theme}
+            />
           )}
 
           {activeTab === 'certs' && (
