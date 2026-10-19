@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoogleDriveLogo, GoogleGeminiLogo, NotebookLMLogo } from './Logos';
+import { GoogleDriveLogo, GoogleGeminiLogo, NotebookLMLogo, GoogleClassroomLogo } from './Logos';
 import {
   Sparkles,
   ExternalLink,
@@ -18,6 +18,7 @@ interface HeaderBannerProps {
   onTogglePomodoro: () => void;
   isPomodoroOpen: boolean;
   onOpenGoogleDriveModal: () => void;
+  onOpenGoogleClassroomModal: () => void;
   tracksCount?: number;
   modulesCount?: number;
   theme?: 'light' | 'dark';
@@ -34,6 +35,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
   onTogglePomodoro,
   isPomodoroOpen,
   onOpenGoogleDriveModal,
+  onOpenGoogleClassroomModal,
   tracksCount = 6,
   modulesCount = 19,
   theme = 'light',
@@ -150,6 +152,36 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
             <span>Google Drive</span>
             <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
           </button>
+
+          {/* Google Classroom button with official logo */}
+          <div className="flex items-center shrink-0">
+            <button
+              onClick={onOpenGoogleClassroomModal}
+              className={`px-3 py-1.5 rounded-l-lg font-semibold flex items-center gap-2 cursor-pointer transition border-y border-l shadow-xs ${
+                isLight
+                  ? 'bg-white hover:bg-emerald-50 text-slate-800 border-emerald-400/80 hover:border-emerald-500'
+                  : 'btn-3d-dark text-slate-200 hover:text-white border-emerald-500/30'
+              }`}
+              title="Abrir Google Classroom: Turmas, Atividades, Exercícios e Materiais"
+            >
+              <GoogleClassroomLogo className="w-4 h-4 shrink-0" />
+              <span>Google Classroom</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            </button>
+            <a
+              href="https://classroom.google.com"
+              target="_blank"
+              rel="noreferrer"
+              className={`px-1.5 py-1.5 rounded-r-lg border transition ${
+                isLight
+                  ? 'bg-white hover:bg-slate-100 text-slate-500 hover:text-emerald-600 border-y border-r border-emerald-400/80'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-y border-r border-emerald-500/30'
+              }`}
+              title="Abrir classroom.google.com em nova aba"
+            >
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
 
           {/* Google Gemini - Opens in-app Q&A and script box directly, with web link icon */}
           <div className="flex items-center shrink-0">

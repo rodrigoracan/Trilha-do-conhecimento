@@ -83,3 +83,22 @@ export const NotebookLMLogo: React.FC<{ className?: string }> = ({ className = '
     <path d="M11 8h6M11 12h6M11 16h4" stroke="url(#notebook-grad)" strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 );
+
+/**
+ * Official Google Classroom Logo (green blackboard with yellow frame & white figures)
+ */
+export const GoogleClassroomLogo: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="3" width="20" height="18" rx="3" fill="#F4B400" />
+    <rect x="3.5" y="4.5" width="17" height="15" rx="1.8" fill="#0F9D58" />
+    {/* Teacher figure */}
+    <circle cx="12" cy="9.2" r="2.1" fill="#FFFFFF" />
+    <path d="M8 15.5c0-2.2 1.8-3.6 4-3.6s4 1.4 4 3.6H8z" fill="#FFFFFF" />
+    {/* Student figure left */}
+    <circle cx="7" cy="10.2" r="1.4" fill="#E8F5E9" fillOpacity="0.9" />
+    <path d="M4.2 15.5c0-1.6 1.2-2.6 2.8-2.6.5 0 1 .1 1.4.3-.6.6-1 1.4-1.1 2.3H4.2z" fill="#E8F5E9" fillOpacity="0.9" />
+    {/* Student figure right */}
+    <circle cx="17" cy="10.2" r="1.4" fill="#E8F5E9" fillOpacity="0.9" />
+    <path d="M19.8 15.5c0-1.6-1.2-2.6-2.8-2.6-.5 0-1 .1-1.4.3.6.6 1 1.4 1.1 2.3h3.1z" fill="#E8F5E9" fillOpacity="0.9" />
+  </svg>
+);

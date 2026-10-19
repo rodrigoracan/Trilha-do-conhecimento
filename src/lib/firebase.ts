@@ -17,6 +17,26 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('https://www.googleapis.com/auth/drive');
 googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
 
+// Google Classroom scopes for courses, coursework, materials, announcements and topics
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.courses');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.courses.readonly');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.coursework.me');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.coursework.me.readonly');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.coursework.students');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.coursework.students.readonly');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.courseworkmaterials');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.announcements');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.announcements.readonly');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.topics');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.topics.readonly');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.rosters');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.rosters.readonly');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.profile.emails');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.profile.photos');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.student-submissions.me.readonly');
+googleProvider.addScope('https://www.googleapis.com/auth/classroom.student-submissions.students.readonly');
+
 // In-memory caching for OAuth access token
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;

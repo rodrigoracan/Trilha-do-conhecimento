@@ -35,9 +35,10 @@ import { DatabaseModal } from './components/DatabaseModal';
 import { SimuladosModal } from './components/SimuladosModal';
 import { GlobalPomodoroWidget } from './components/GlobalPomodoroWidget';
 import { GoogleDriveModal } from './components/GoogleDriveModal';
+import { GoogleClassroomModal } from './components/GoogleClassroomModal';
 import { GeminiChatModal } from './components/GeminiChatModal';
 import { NotebookGeminiModal } from './components/NotebookGeminiModal';
-import { NotebookBook } from './types';
+import { NotebookBook, TrackResource } from './types';
 import { initialNotebooks } from './data/initialData';
 import { auth } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -63,6 +64,7 @@ export default function App() {
   const [isPomodoroWidgetOpen, setIsPomodoroWidgetOpen] = useState(false);
   const [isSimuladosModalOpen, setIsSimuladosModalOpen] = useState(false);
   const [isGoogleDriveModalOpen, setIsGoogleDriveModalOpen] = useState(false);
+  const [isGoogleClassroomModalOpen, setIsGoogleClassroomModalOpen] = useState(false);
   const [certForSimulados, setCertForSimulados] = useState<Certification | null>(null);
 
   // Gemini AI & Notebook Modals states
@@ -562,6 +564,8 @@ export default function App() {
                   setIsNotebookModalOpen(true);
                 }}
                 theme={theme}
+                studySessions={database.studySessions}
+                onLogStudyHours={(hours, trackTitle) => handleLogManualHours(hours, trackTitle)}
               />
             ) : (
               <TracksHubView
