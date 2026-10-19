@@ -21,6 +21,7 @@ import {
 } from './utils/storage';
 import { Navbar, ActiveTab } from './components/Navbar';
 import { HeaderBanner } from './components/HeaderBanner';
+import { ToolsMenuBar } from './components/ToolsMenuBar';
 import { TracksHubView } from './components/TracksHubView';
 import { TrackDetailView } from './components/TrackDetailView';
 import { TrackEditModal } from './components/TrackEditModal';
@@ -340,6 +341,41 @@ export default function App() {
     });
   };
 
+  const handleAddResourceFromClassroom = (
+    trackId: string,
+    subcategoryId: string,
+    resource: { title: string; url: string; type: 'video' | 'doc' | 'link' }
+  ) => {
+    updateDbAndPersist((prev) => {
+      const updatedTracks = (prev.knowledgeTracks || []).map((t) => {
+        if (t.id !== trackId) return t;
+        const updatedSubs = (t.subcategories || []).map((sub) => {
+          if (sub.id !== subcategoryId) return sub;
+          const newRes: TrackResource = {
+            id: `res-classroom-${Date.now()}`,
+            title: resource.title,
+            url: resource.url,
+            type: resource.type,
+            platform: 'Google Classroom',
+            addedAt: new Date().toISOString(),
+            completed: false,
+          };
+          if (sub.items && sub.items.length > 0) {
+            const updatedItems = [...sub.items];
+            updatedItems[0] = {
+              ...updatedItems[0],
+              resources: [...(updatedItems[0].resources || []), newRes],
+            };
+            return { ...sub, items: updatedItems };
+          }
+          return sub;
+        });
+        return { ...t, subcategories: updatedSubs, updatedAt: new Date().toISOString() };
+      });
+      return { ...prev, knowledgeTracks: updatedTracks };
+    });
+  };
+
   // --- POMODORO SESSION COMPLETION ---
   const handleSessionComplete = (session: Omit<StudySession, 'id'>) => {
     const newSession: StudySession = {
@@ -508,19 +544,18 @@ export default function App() {
     >
       {/* Container Layout with Maximum Contrast and Depth */}
       <div className="max-w-[1440px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 space-y-5 flex-1 flex flex-col">
-        {/* Top Header Banner with Shortcuts and Integrated Trilhas/Módulos Numbers */}
+        {/* Top Header Banner: Title, Trilhas/Módulos Numbers and Theme Toggle ONLY */}
         <HeaderBanner
-          onOpenDatabaseModal={() => setIsDatabaseModalOpen(true)}
-          googleDriveUrl={database.config.googleDriveUrl}
-          weeklyHoursLogged={weeklyHoursLogged}
-          targetHoursWeekly={database.config.targetHoursWeekly}
-          onTogglePomodoro={() => setIsPomodoroWidgetOpen((prev) => !prev)}
-          isPomodoroOpen={isPomodoroWidgetOpen}
-          onOpenGoogleDriveModal={() => setIsGoogleDriveModalOpen(true)}
           tracksCount={tracksCount}
           modulesCount={modulesCount}
           theme={theme}
           onToggleTheme={handleToggleTheme}
+        />
+
+        {/* Dynamic Dedicated Tools & Integrations Menu Bar */}
+        <ToolsMenuBar
+          onOpenGoogleDriveModal={() => setIsGoogleDriveModalOpen(true)}
+          onOpenGoogleClassroomModal={() => setIsGoogleClassroomModalOpen(true)}
           onOpenGeminiChat={() => {
             setGeminiTrackContext(selectedTrack ? selectedTrack.title : '');
             setIsGeminiChatModalOpen(true);
@@ -529,6 +564,12 @@ export default function App() {
             setSelectedNotebookBookId('');
             setIsNotebookModalOpen(true);
           }}
+          onTogglePomodoro={() => setIsPomodoroWidgetOpen((prev) => !prev)}
+          isPomodoroOpen={isPomodoroWidgetOpen}
+          weeklyHoursLogged={weeklyHoursLogged}
+          onOpenSimuladosModal={() => setIsSimuladosModalOpen(true)}
+          onOpenDatabaseModal={() => setIsDatabaseModalOpen(true)}
+          theme={theme}
         />
 
         {/* Clean, Objective Navigation Tabs */}
@@ -772,6 +813,15 @@ export default function App() {
         certifications={database.certifications}
         onAddResourceToCert={handleAddResourceFromDrive}
         database={database}
+      />
+
+      <GoogleClassroomModal
+        isOpen={isGoogleClassroomModalOpen}
+        onClose={() => setIsGoogleClassroomModalOpen(false)}
+        tracks={database.knowledgeTracks || []}
+        certifications={database.certifications}
+        onAddResourceToTrack={handleAddResourceFromClassroom}
+        theme={theme}
       />
 
       {/* Gemini AI Q&A Interactive Script & Questions Modal */}

@@ -63,24 +63,32 @@ export const GoogleGeminiLogo: React.FC<{ className?: string }> = ({ className =
 );
 
 /**
- * Stylized Google NotebookLM emblem
+ * Official Google NotebookLM Logo
+ * Multi-colored orbital vortex/swirl in Google AI identity palette
  */
 export const NotebookLMLogo: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
-  <svg
-    viewBox="0 0 24 24"
-    className={className}
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <defs>
-      <linearGradient id="notebook-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#818CF8" />
-        <stop offset="100%" stopColor="#C084FC" />
-      </linearGradient>
-    </defs>
-    <rect x="3.5" y="3" width="17" height="18" rx="3" fill="#0E1626" stroke="#818CF8" strokeWidth="1.2" />
-    <path d="M7 3v18" stroke="#818CF8" strokeWidth="1.2" strokeDasharray="2 2" />
-    <path d="M11 8h6M11 12h6M11 16h4" stroke="url(#notebook-grad)" strokeWidth="1.5" strokeLinecap="round" />
+  <svg viewBox="0 0 24 24" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="24" height="24" rx="6" fill="#1F2328" />
+    <path
+      d="M12 4.5C7.858 4.5 4.5 7.858 4.5 12C4.5 16.142 7.858 19.5 12 19.5C16.142 19.5 19.5 16.142 19.5 12"
+      stroke="#4285F4"
+      strokeWidth="2.1"
+      strokeLinecap="round"
+    />
+    <path
+      d="M12 7.4C9.46 7.4 7.4 9.46 7.4 12C7.4 14.54 9.46 16.6 12 16.6C14.54 16.6 16.6 14.54 16.6 12"
+      stroke="#EA4335"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+    />
+    <path
+      d="M12 9.8C10.785 9.8 9.8 10.785 9.8 12C9.8 13.215 10.785 14.2 12 14.2C13.215 14.2 14.2 13.215 14.2 12"
+      stroke="#FBBC05"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+    <circle cx="12" cy="12" r="1.3" fill="#34A853" />
+    <circle cx="17.8" cy="7.2" r="1.4" fill="#C084FC" />
   </svg>
 );
 
