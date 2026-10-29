@@ -19,8 +19,10 @@ import {
   Download,
   FileCode,
   FileCheck,
-  ArrowLeft
+  ArrowLeft,
+  BarChart3
 } from 'lucide-react';
+import { CertificationHoursD3Chart } from './CertificationHoursD3Chart';
 
 interface CertificationsViewProps {
   certifications: Certification[];
@@ -53,6 +55,7 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
 }) => {
   const isLight = theme === 'light';
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
+  const [showHoursChart, setShowHoursChart] = useState<boolean>(true);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
 
   const categories = ['Todas', 'Governança', 'MLOps', 'Segurança', 'Auditoria', 'Técnica'];
@@ -228,19 +231,19 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
       {/* Return to Tracks Breadcrumb Banner - Adapts to Light & Dark Theme */}
       {onBackToTracks && (
         <div
-          className={`flex items-center justify-between p-3.5 rounded-xl border-2 transition-colors animate-fadeIn ${
+          className={`flex items-center justify-between p-3 sm:p-3.5 rounded-xl transition-colors shadow-xs animate-fadeIn ${
             isLight
-              ? 'bg-[#e5f0fc] border-[#8cb7ea] shadow-md shadow-sky-900/5'
-              : 'bg-[#09152a] border-blue-900/40 shadow-sm'
+              ? 'bg-[#eef5fc] text-slate-800'
+              : 'bg-[#0a1529] text-slate-200'
           }`}
         >
           <div className="flex items-center gap-2.5 text-xs">
             <button
               onClick={onBackToTracks}
-              className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer font-bold transition ${
+              className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer font-bold transition shadow-xs ${
                 isLight
-                  ? 'bg-white hover:bg-sky-50 text-sky-800 border border-sky-300 shadow-2xs'
-                  : 'btn-3d-dark text-sky-400 hover:text-white'
+                  ? 'bg-white hover:bg-sky-50 text-sky-800'
+                  : 'bg-slate-800 hover:bg-slate-700 text-sky-400 hover:text-white'
               }`}
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -263,7 +266,7 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
 
       {/* Top Filter Bar */}
       <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2 border-b ${
-        isLight ? 'border-sky-200' : 'border-slate-800/80'
+        isLight ? 'border-sky-200/60' : 'border-slate-800/80'
       }`}>
         <div className="flex items-center gap-2">
           <h2 className={`text-base font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -280,14 +283,12 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-2.5 py-1 rounded text-xs font-medium transition cursor-pointer whitespace-nowrap ${
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer whitespace-nowrap ${
                   selectedCategory === cat
-                    ? isLight
-                      ? 'bg-sky-600 text-white font-bold shadow-2xs'
-                      : 'bg-slate-800 text-sky-400 font-semibold'
+                    ? 'bg-sky-600 text-white font-bold shadow-xs'
                     : isLight
-                    ? 'bg-white hover:bg-sky-50 text-slate-700 border border-sky-200'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'text-slate-600 hover:text-sky-700 hover:bg-sky-50 font-medium'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800 font-medium'
                 }`}
               >
                 {cat}
@@ -295,15 +296,40 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
             ))}
           </div>
 
-          <button
-            onClick={onOpenCreateModal}
-            className="btn-3d-teal px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Novo Módulo
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowHoursChart((prev) => !prev)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs ${
+                showHoursChart
+                  ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                  : isLight
+                  ? 'bg-white hover:bg-slate-100 text-slate-700'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+              }`}
+              title="Alternar exibição do gráfico D3 de carga horária das certificações"
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>{showHoursChart ? 'Ocultar Gráfico D3' : 'Ver Gráfico D3'}</span>
+            </button>
+
+            <button
+              onClick={onOpenCreateModal}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap bg-teal-600 hover:bg-teal-700 text-white shadow-xs transition"
+            >
+              <Plus className="w-4 h-4" />
+              Novo Módulo
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* D3 Interactive Hours Distribution Chart */}
+      {showHoursChart && (
+        <CertificationHoursD3Chart
+          certifications={certifications}
+          theme={theme}
+        />
+      )}
 
       {/* Responsive Grid with Themed Boxes */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

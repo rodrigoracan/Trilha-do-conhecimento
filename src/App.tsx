@@ -592,6 +592,10 @@ export default function App() {
           modulesCount={modulesCount}
           theme={theme}
           onToggleTheme={handleToggleTheme}
+          onGoHome={() => {
+            setActiveTab('tracks');
+            setSelectedTrack(null);
+          }}
         />
 
         {/* Dynamic Dedicated Tools & Integrations Menu Bar */}

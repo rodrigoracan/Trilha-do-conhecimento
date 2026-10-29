@@ -333,26 +333,26 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
 
   return (
     <div className="space-y-5 animate-fadeIn">
-      {/* Distinct Prominent Control Bar with High Contrast Outline */}
+      {/* Sleek, Borderless Filter Menu Bar */}
       <div
-        className={`flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 p-3.5 sm:p-4 rounded-2xl border-2 transition-all ${
+        className={`flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 p-3.5 sm:p-4 rounded-2xl shadow-xs transition-all ${
           isLight
-            ? 'bg-gradient-to-r from-[#faf5ff] via-[#f3e8ff] to-[#f5f3ff] border-purple-400 shadow-lg shadow-purple-950/10'
-            : 'bg-gradient-to-r from-[#1d1238] via-[#26174a] to-[#1d1238] border-purple-500/80 shadow-2xl shadow-black/70'
+            ? 'bg-white/80 backdrop-blur-md shadow-slate-200/50'
+            : 'bg-[#0e172e]/80 backdrop-blur-md shadow-black/40'
         }`}
       >
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? 'text-purple-700' : 'text-purple-300'}`} />
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? 'text-purple-600' : 'text-purple-400'}`} />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Pesquisar trilha, módulo, vídeo ou anotação..."
-            className={`w-full pl-10 pr-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-purple-500/40 ${
+            className={`w-full pl-10 pr-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-purple-500/30 ${
               isLight
-                ? 'bg-white border-2 border-purple-300 text-slate-900 placeholder-slate-400 focus:border-purple-600 shadow-2xs'
-                : 'bg-[#100824] border-2 border-purple-500/60 text-white placeholder-slate-400 focus:border-purple-400'
+                ? 'bg-slate-100/90 text-slate-900 placeholder-slate-400 focus:bg-white'
+                : 'bg-slate-800/70 text-white placeholder-slate-400 focus:bg-slate-800'
             }`}
           />
           {searchTerm && (
@@ -368,19 +368,19 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
         {/* Category Filter Chips & Add Track Action */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
-            <Filter className={`w-3.5 h-3.5 mr-0.5 shrink-0 ${isLight ? 'text-purple-700' : 'text-purple-400'}`} />
+            <Filter className={`w-3.5 h-3.5 mr-0.5 shrink-0 ${isLight ? 'text-purple-600' : 'text-purple-400'}`} />
             {categories.map((cat) => {
               const isSelected = selectedCategory === cat.id;
               return (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border-2 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
                     isSelected
-                      ? 'bg-purple-600 text-white font-black shadow-md shadow-purple-600/30 border-purple-400 scale-[1.02]'
+                      ? 'bg-purple-600 text-white shadow-xs'
                       : isLight
-                      ? 'bg-white hover:bg-purple-100/70 text-purple-950 border-purple-300 font-extrabold shadow-2xs'
-                      : 'bg-[#140b28] text-purple-200 hover:text-white hover:bg-purple-900/60 border-purple-500/40'
+                      ? 'text-slate-600 hover:text-purple-700 hover:bg-purple-50/80 font-medium'
+                      : 'text-slate-300 hover:text-white hover:bg-purple-950/40 font-medium'
                   }`}
                 >
                   {cat.label}
@@ -392,7 +392,7 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
           {/* Add Track Action */}
           <button
             onClick={onOpenCreateTrackModal}
-            className="btn-3d-primary px-3.5 py-1.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow-md shrink-0 ml-auto"
+            className="px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer bg-purple-600 hover:bg-purple-700 text-white shadow-xs shrink-0 ml-auto transition"
           >
             <Plus className="w-4 h-4" />
             <span>Nova Trilha de Estudo</span>

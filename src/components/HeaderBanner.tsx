@@ -12,6 +12,7 @@ interface HeaderBannerProps {
   modulesCount?: number;
   theme?: 'light' | 'dark';
   onToggleTheme?: () => void;
+  onGoHome?: () => void;
 }
 
 export const HeaderBanner: React.FC<HeaderBannerProps> = ({
@@ -19,6 +20,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
   modulesCount = 19,
   theme = 'light',
   onToggleTheme,
+  onGoHome,
 }) => {
   const isLight = theme === 'light';
 
@@ -34,9 +36,13 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
       >
         {/* Title & Hub Counters */}
         <div className="flex flex-wrap items-center gap-3.5 sm:gap-5 shrink-0">
-          <div className="flex items-center gap-3">
+          <button
+            onClick={onGoHome}
+            className="flex items-center gap-3 text-left cursor-pointer group focus:outline-none"
+            title="Ir para a página inicial das Trilhas RACAN"
+          >
             <div
-              className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center shrink-0 shadow-md ${
+              className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center shrink-0 shadow-md transition group-hover:scale-105 ${
                 isLight
                   ? 'bg-blue-600 border-blue-400 text-white shadow-blue-500/30'
                   : 'bg-blue-500 border-blue-300 text-white shadow-blue-500/40'
@@ -46,14 +52,14 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
             </div>
             <div>
               <h1
-                className={`text-base sm:text-xl font-black tracking-tight leading-tight flex items-center gap-2 ${
+                className={`text-base sm:text-xl font-black tracking-tight leading-tight flex items-center gap-2 transition group-hover:text-blue-600 dark:group-hover:text-blue-400 ${
                   isLight ? 'text-blue-950' : 'text-white'
                 }`}
               >
                 <span>Trilha de Estudos RACAN</span>
               </h1>
             </div>
-          </div>
+          </button>
 
           {/* Integrated Numbers of Trilhas & Módulos with high contrast */}
           <div className={`flex items-center gap-2.5 pl-2 sm:pl-4 border-l-2 ${isLight ? 'border-blue-200' : 'border-blue-700/60'}`}>
