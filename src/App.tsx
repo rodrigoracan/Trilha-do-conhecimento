@@ -23,6 +23,7 @@ import {
 import { Navbar, ActiveTab } from './components/Navbar';
 import { HeaderBanner } from './components/HeaderBanner';
 import { ToolsMenuBar } from './components/ToolsMenuBar';
+import { DashboardView } from './components/DashboardView';
 import { TracksHubView } from './components/TracksHubView';
 import { TrackDetailView } from './components/TrackDetailView';
 import { TrackEditModal } from './components/TrackEditModal';
@@ -41,6 +42,7 @@ import { GoogleDriveModal } from './components/GoogleDriveModal';
 import { GoogleClassroomModal } from './components/GoogleClassroomModal';
 import { GeminiChatModal } from './components/GeminiChatModal';
 import { NotebookGeminiModal } from './components/NotebookGeminiModal';
+import { McpLegislationModal } from './components/McpLegislationModal';
 import { NotebookBook, TrackResource } from './types';
 import { initialNotebooks } from './data/initialData';
 import { auth } from './lib/firebase';
@@ -70,9 +72,10 @@ export default function App() {
   const [isGoogleClassroomModalOpen, setIsGoogleClassroomModalOpen] = useState(false);
   const [certForSimulados, setCertForSimulados] = useState<Certification | null>(null);
 
-  // Gemini AI & Notebook Modals states
+  // Gemini AI, Notebook & MCP Modals states
   const [isGeminiChatModalOpen, setIsGeminiChatModalOpen] = useState(false);
   const [isNotebookModalOpen, setIsNotebookModalOpen] = useState(false);
+  const [isMcpModalOpen, setIsMcpModalOpen] = useState(false);
   const [geminiTrackContext, setGeminiTrackContext] = useState<string>('');
   const [selectedNotebookBookId, setSelectedNotebookBookId] = useState<string>('');
 
@@ -581,7 +584,7 @@ export default function App() {
   return (
     <div
       className={`min-h-screen flex flex-col antialiased selection:bg-sky-500 selection:text-white transition-colors duration-200 ${
-        theme === 'light' ? 'bg-[#ebf3fc] text-slate-900' : 'bg-[#0c1529] text-slate-100'
+        theme === 'light' ? 'bg-[#edf4fc] text-slate-900' : 'bg-[#1c3660] text-slate-100'
       }`}
     >
       {/* Container Layout with Maximum Contrast and Depth */}
@@ -615,6 +618,7 @@ export default function App() {
           weeklyHoursLogged={weeklyHoursLogged}
           onOpenSimuladosModal={() => setIsSimuladosModalOpen(true)}
           onOpenDatabaseModal={() => setIsDatabaseModalOpen(true)}
+          onOpenMcpModal={() => setIsMcpModalOpen(true)}
           theme={theme}
         />
 
@@ -673,6 +677,28 @@ export default function App() {
                 theme={theme}
               />
             )
+          )}
+
+          {activeTab === 'dashboard' && (
+            <DashboardView
+              certifications={database.certifications}
+              studySessions={database.studySessions}
+              gates={database.scheduleGates}
+              plannedTasks={database.plannedTasks || []}
+              reminders={database.reminders}
+              knowledgeTracks={database.knowledgeTracks || []}
+              targetHoursWeekly={database.config?.targetHoursWeekly || 11}
+              onNavigateToTab={(tab) => {
+                setSelectedTrack(null);
+                setActiveTab(tab);
+              }}
+              onStartPomodoro={(target) => {
+                if (target) setSelectedCertIdForFocus(target);
+                setIsPomodoroWidgetOpen(true);
+              }}
+              onLogManualHours={handleLogManualHours}
+              theme={theme}
+            />
           )}
 
           {activeTab === 'planner' && (
@@ -924,6 +950,17 @@ export default function App() {
             updatedAt: new Date().toISOString(),
           };
           handleSaveNote(newNote);
+        }}
+        theme={theme}
+      />
+
+      {/* Official Legislation & MCP Connectors Hub Modal */}
+      <McpLegislationModal
+        isOpen={isMcpModalOpen}
+        onClose={() => setIsMcpModalOpen(false)}
+        onAskAiAboutLegislation={(legislationTitle) => {
+          setGeminiTrackContext(`Legislação/Norma: ${legislationTitle}`);
+          setIsGeminiChatModalOpen(true);
         }}
         theme={theme}
       />

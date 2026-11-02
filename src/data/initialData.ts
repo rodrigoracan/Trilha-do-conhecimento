@@ -1,4 +1,5 @@
 import { Certification, ScheduleGate, StudyNote, ActionReminder, ActiveRecallCard, AppConfig, KnowledgeTrack, NotebookBook } from '../types';
+import { governanceTrack } from './governanceTrackData';
 
 export const initialConfig: AppConfig = {
   googleDriveUrl: 'https://drive.google.com',
@@ -463,6 +464,42 @@ export const initialFlashcards: ActiveRecallCard[] = [
     answer: 'Simétrica: mesma chave para cifrar e decifrar (rápida, ex: AES). Assimétrica: par de chave pública e privada (ex: RSA, ECC).',
     box: 1,
     nextReviewDate: '2026-10-14'
+  },
+  {
+    id: 'flash-4',
+    certificationId: 'iapp-aigp',
+    topic: 'Brasil - PL 2338/2023',
+    question: 'O que é a Avaliação de Impacto Algorítmico (AIA) no PL 2338/2023?',
+    answer: 'Procedimento obrigatório para sistemas de alto risco que documenta a finalidade, riscos a direitos fundamentais, medidas de mitigação e governança de dados.',
+    box: 1,
+    nextReviewDate: '2026-10-25'
+  },
+  {
+    id: 'flash-5',
+    certificationId: 'iso-42001',
+    topic: 'NIST AI RMF',
+    question: 'Quais são as 4 funções centrais do NIST AI Risk Management Framework 1.0?',
+    answer: '1. GOVERN (cultura e políticas);\n2. MAP (contexto e categorização de riscos);\n3. MEASURE (análise qualitativa e quantitativa);\n4. MANAGE (alocação de recursos e resposta a riscos).',
+    box: 1,
+    nextReviewDate: '2026-10-25'
+  },
+  {
+    id: 'flash-6',
+    certificationId: 'iapp-aigp',
+    topic: 'OWASP LLM',
+    question: 'O que caracteriza a vulnerabilidade LLM01 (Prompt Injection)?',
+    answer: 'Manipulação de instruções via entrada do usuário (direta) ou dados externos/web (indireta), fazendo o modelo ignorar restrições originais e executar ações não autorizadas.',
+    box: 1,
+    nextReviewDate: '2026-10-25'
+  },
+  {
+    id: 'flash-7',
+    certificationId: 'iso-42001',
+    topic: 'MITRE ATLAS',
+    question: 'Qual é o foco principal do framework MITRE ATLAS?',
+    answer: 'Mapear táticas, técnicas e procedimentos (TTPs) reais de ameaças adversárias contra sistemas de Machine Learning (evasão, poisoning e extração de modelo).',
+    box: 1,
+    nextReviewDate: '2026-10-25'
   }
 ];
 
@@ -477,6 +514,7 @@ export const dailyTips: string[] = [
 ];
 
 export const initialKnowledgeTracks: KnowledgeTrack[] = [
+  governanceTrack,
   {
     id: 'track-certificacoes-ti',
     slug: 'certificacoes-ti',

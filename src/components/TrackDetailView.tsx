@@ -472,19 +472,19 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
 
     switch (color) {
       case 'sky':
-        return 'bg-[#0a1528] border-2 border-sky-500/50';
+        return 'bg-[#0c1830] border-2 border-sky-400/60 shadow-md';
       case 'purple':
-        return 'bg-[#0a1528] border-2 border-purple-500/50';
+        return 'bg-[#130b24] border-2 border-purple-400/60 shadow-md';
       case 'rose':
-        return 'bg-[#0a1528] border-2 border-rose-500/50';
+        return 'bg-[#1c0812] border-2 border-rose-400/60 shadow-md';
       case 'emerald':
-        return 'bg-[#0a1528] border-2 border-emerald-500/50';
+        return 'bg-[#071c12] border-2 border-emerald-400/60 shadow-md';
       case 'amber':
-        return 'bg-[#0a1528] border-2 border-amber-500/50';
+        return 'bg-[#1e1305] border-2 border-amber-400/60 shadow-md';
       case 'teal':
-        return 'bg-[#0a1528] border-2 border-teal-500/50';
+        return 'bg-[#061b1c] border-2 border-teal-400/60 shadow-md';
       default:
-        return 'bg-[#0a1528] border-2 border-slate-800';
+        return 'bg-[#0c1830] border-2 border-slate-700/80 shadow-md';
     }
   };
 
@@ -507,7 +507,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
           return 'bg-[#edf6ff] border-2 border-sky-400 shadow-md shadow-sky-900/5';
       }
     }
-    return 'bg-gradient-to-r from-[#0d223f] via-[#102b52] to-[#0d203b] border-2 border-blue-800/40 shadow-black/40';
+    return 'bg-gradient-to-r from-[#0c1830] via-[#0f2142] to-[#0c1830] border-2 border-blue-400/60 shadow-xl shadow-black/40';
   };
 
   return (
@@ -517,7 +517,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
         className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl border-2 transition-colors ${
           isLight
             ? 'bg-[#e5f0fc] border-[#8cb7ea] shadow-md shadow-sky-900/5'
-            : 'bg-[#09152a] border-blue-900/40 shadow-sm'
+            : 'bg-[#0d1830] border-2 border-slate-700/60 shadow-md'
         }`}
       >
         <div className="flex items-center gap-2 text-xs sm:text-sm">

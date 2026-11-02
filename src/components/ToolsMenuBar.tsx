@@ -9,7 +9,8 @@ import {
   ExternalLink,
   Award,
   Database,
-  Sparkles
+  Sparkles,
+  Scale
 } from 'lucide-react';
 
 interface ToolsMenuBarProps {
@@ -22,6 +23,7 @@ interface ToolsMenuBarProps {
   weeklyHoursLogged?: number;
   onOpenSimuladosModal?: () => void;
   onOpenDatabaseModal?: () => void;
+  onOpenMcpModal?: () => void;
   theme?: 'light' | 'dark';
 }
 
@@ -32,6 +34,7 @@ export const ToolsMenuBar: React.FC<ToolsMenuBarProps> = ({
   onOpenNotebookGemini,
   onOpenSimuladosModal,
   onOpenDatabaseModal,
+  onOpenMcpModal,
   theme = 'light',
 }) => {
   const isLight = theme === 'light';
@@ -40,8 +43,8 @@ export const ToolsMenuBar: React.FC<ToolsMenuBarProps> = ({
     <div
       className={`w-full px-3 py-2 rounded-2xl transition-all duration-200 ${
         isLight
-          ? 'bg-white/80 shadow-xs'
-          : 'bg-[#0e172e]/80 shadow-xs'
+          ? 'bg-[#dce9f8] shadow-xs border border-blue-300/80'
+          : 'bg-[#122444]/95 shadow-md border border-blue-500/30'
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -169,6 +172,25 @@ export const ToolsMenuBar: React.FC<ToolsMenuBarProps> = ({
               <ExternalLink className="w-3 h-3" />
             </a>
           </div>
+
+          {/* 5. Legislações & MCP */}
+          {onOpenMcpModal && (
+            <button
+              onClick={onOpenMcpModal}
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                isLight
+                  ? 'hover:bg-amber-50 text-slate-700 hover:text-amber-800'
+                  : 'hover:bg-amber-950/50 text-slate-200 hover:text-amber-300'
+              }`}
+              title="Portais Oficiais de Legislação e Conexões Model Context Protocol (MCP)"
+            >
+              <Scale className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>Legislações & MCP</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                0 Tokens
+              </span>
+            </button>
+          )}
 
           {/* 5. Simulados */}
           {onOpenSimuladosModal && (

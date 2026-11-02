@@ -95,10 +95,31 @@ export function loadDatabase(): AppDatabase {
       };
     });
 
-    // Check if default tracks are present, if not add them
+    // Check if default tracks are present, if not add them, and populate subcategories for Governança e Segurança de IA if empty
     initialKnowledgeTracks.forEach((defTrack) => {
-      if (!loadedTracks.some((t) => t.id === defTrack.id || t.slug === defTrack.slug)) {
-        loadedTracks = [...loadedTracks, defTrack];
+      const idx = loadedTracks.findIndex((t) => t.id === defTrack.id || t.slug === defTrack.slug);
+      if (idx === -1) {
+        if (defTrack.id === 'track-governanca-seguranca-ia') {
+          loadedTracks.unshift(defTrack);
+        } else {
+          loadedTracks.push(defTrack);
+        }
+      } else if (defTrack.id === 'track-governanca-seguranca-ia' || (defTrack.subcategories && defTrack.subcategories.length > 0 && (!loadedTracks[idx].subcategories || loadedTracks[idx].subcategories.length === 0))) {
+        loadedTracks[idx] = {
+          ...loadedTracks[idx],
+          subcategories: defTrack.subcategories,
+          description: defTrack.description || loadedTracks[idx].description,
+          subtitle: defTrack.subtitle || loadedTracks[idx].subtitle,
+          tags: defTrack.tags || loadedTracks[idx].tags,
+        };
+      }
+    });
+
+    // Merge initial flashcards to ensure new cards from document are present
+    let loadedFlashcards = parsed.flashcards?.length ? parsed.flashcards : initialFlashcards;
+    initialFlashcards.forEach((card) => {
+      if (!loadedFlashcards.some((c) => c.id === card.id)) {
+        loadedFlashcards = [...loadedFlashcards, card];
       }
     });
 
@@ -111,7 +132,7 @@ export function loadDatabase(): AppDatabase {
       scheduleGates: parsed.scheduleGates?.length ? parsed.scheduleGates : initialScheduleGates,
       notes: parsed.notes || initialNotes,
       reminders: parsed.reminders || initialReminders,
-      flashcards: parsed.flashcards || initialFlashcards,
+      flashcards: loadedFlashcards,
       studySessions: parsed.studySessions || [],
       notebooks: parsed.notebooks?.length ? parsed.notebooks : initialNotebooks,
       plannedTasks: parsed.plannedTasks || [],

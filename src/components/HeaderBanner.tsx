@@ -30,8 +30,8 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
       <div
         className={`w-full flex items-center justify-between gap-4 px-5 sm:px-7 py-3.5 sm:py-4 rounded-2xl transition-all duration-200 ${
           isLight
-            ? 'bg-gradient-to-r from-white via-[#f2f7ff] to-white border-2 border-blue-500 shadow-xl shadow-blue-950/10'
-            : 'bg-gradient-to-r from-[#111c3b] via-[#16254f] to-[#111c3b] border-2 border-blue-500/90 shadow-2xl shadow-black/70'
+            ? 'bg-gradient-to-r from-[#d5e5f8] via-[#e2effc] to-[#d5e5f8] border-2 border-blue-400 shadow-md shadow-blue-900/10'
+            : 'bg-gradient-to-r from-[#112242] via-[#162d54] to-[#112242] border-2 border-blue-400/80 shadow-2xl shadow-black/70'
         }`}
       >
         {/* Title & Hub Counters */}

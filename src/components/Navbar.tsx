@@ -10,10 +10,11 @@ import {
   ChevronDown,
   Pin,
   PinOff,
-  ArrowLeft
+  ArrowLeft,
+  LayoutDashboard,
 } from 'lucide-react';
 
-export type ActiveTab = 'tracks' | 'planner' | 'certs' | 'pomodoro' | 'techniques' | 'notes' | 'reminders';
+export type ActiveTab = 'tracks' | 'dashboard' | 'planner' | 'certs' | 'pomodoro' | 'techniques' | 'notes' | 'reminders';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -38,8 +39,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const isOpen = isPinned || isHovered;
 
-  // Notice: 'tracks' (Trilhas RACAN) was removed from this line as requested to de-clutter the screen.
+  // Notice: 'tracks' (Trilhas RACAN) is accessible via home/back buttons
   const navItems = [
+    {
+      id: 'dashboard' as ActiveTab,
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      badge: null,
+      desc: 'Horas, Tendências & Marcos',
+    },
     {
       id: 'planner' as ActiveTab,
       label: 'Planejamento de Estudos',
@@ -94,8 +102,8 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div
         className={`w-full rounded-2xl transition-all duration-200 select-none ${
           isLight
-            ? 'bg-white/85 backdrop-blur-md shadow-xs hover:bg-white text-slate-800'
-            : 'bg-[#0e172e]/85 backdrop-blur-md shadow-xs hover:bg-[#0e172e] text-slate-200'
+            ? 'bg-[#dce9f8] backdrop-blur-md shadow-xs hover:bg-[#d5e5f8] text-slate-800 border border-blue-300/80'
+            : 'bg-[#122444]/95 backdrop-blur-md shadow-md hover:bg-[#152a50] text-slate-200 border border-blue-500/30'
         } ${isOpen ? 'rounded-b-none' : ''}`}
       >
         <div className="flex items-center justify-between px-3.5 py-2 text-xs">
@@ -189,8 +197,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div
           className={`w-full p-2.5 rounded-b-2xl shadow-xl transition-all duration-200 animate-fadeIn ${
             isLight
-              ? 'bg-white/95 backdrop-blur-md shadow-slate-200/60'
-              : 'bg-[#0e172e]/95 backdrop-blur-md shadow-black/60'
+              ? 'bg-[#dce9f8]/98 backdrop-blur-md shadow-slate-300/60 border-x border-b border-blue-300/80'
+              : 'bg-[#122444]/98 backdrop-blur-md shadow-2xl border-x border-b border-blue-500/30'
           }`}
         >
           <div className="flex flex-wrap items-center gap-1.5">
