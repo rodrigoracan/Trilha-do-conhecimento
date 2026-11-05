@@ -160,14 +160,131 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     };
   }, [studySessions, targetHoursWeekly]);
 
-  // 3. STATISTIC: Upcoming Milestones (Gates + Planned Tasks + Deadlines)
+  // 3. STATISTIC: Upcoming Milestones (Gates + Certifications Progress + Planned Tasks + Deadlines)
   const sortedGates = useMemo(() => {
     return [...gates].sort((a, b) => a.gateNumber - b.gateNumber);
   }, [gates]);
 
+  const gatesWithProgress = useMemo(() => {
+    return sortedGates.map((gate) => {
+      // Find certifications assigned to this gate (via targetGate or focusCertifications)
+      const matched = certifications.filter((c) => {
+        const targetGateStr = (c.targetGate || '').toLowerCase();
+        const gateKey = `gate ${gate.gateNumber}`;
+        const isTargetMatch =
+          targetGateStr === gateKey ||
+          targetGateStr.includes(gateKey) ||
+          targetGateStr === `${gate.gateNumber}`;
+
+        const isFocusMatch = gate.focusCertifications?.some((fc) => {
+          const fcLower = fc.toLowerCase();
+          const titleLower = c.title.toLowerCase();
+          const codeLower = c.code.toLowerCase();
+          return (
+            titleLower.includes(fcLower) ||
+            codeLower.includes(fcLower) ||
+            fcLower.includes(codeLower)
+          );
+        });
+
+        return isTargetMatch || isFocusMatch;
+      });
+
+      const certsList = matched.map((c) => {
+        const totalMods = c.modules?.length || 0;
+        const doneMods = c.modules?.filter((m) => m.completed).length || 0;
+        const modPct = totalMods > 0 ? Math.round((doneMods / totalMods) * 100) : 0;
+        const hrsSpent = c.hoursSpent || 0;
+        const estHrs = c.estimatedHours || 60;
+        const hrsPct = estHrs > 0 ? Math.min(100, Math.round((hrsSpent / estHrs) * 100)) : 0;
+
+        let compPct = 0;
+        if (c.status === 'Concluída') {
+          compPct = 100;
+        } else if (totalMods > 0 && hrsSpent > 0) {
+          compPct = Math.round(modPct * 0.65 + hrsPct * 0.35);
+        } else if (totalMods > 0) {
+          compPct = modPct;
+        } else {
+          compPct = hrsPct;
+        }
+
+        return {
+          id: c.id,
+          code: c.code || c.title,
+          title: c.title,
+          category: c.category || 'Governança',
+          colorTheme: c.colorTheme || 'sky',
+          status: c.status || 'Planejada',
+          hoursSpent: hrsSpent,
+          estimatedHours: estHrs,
+          totalModules: totalMods,
+          completedModules: doneMods,
+          modulesPercentage: modPct,
+          hoursPercentage: hrsPct,
+          completionPercentage: compPct,
+          isPlaceholder: false,
+        };
+      });
+
+      // Add any focusCertifications from gate that are not in database yet (as strategic roadmap targets)
+      if (gate.focusCertifications) {
+        gate.focusCertifications.forEach((fc) => {
+          const exists = certsList.some(
+            (cp) =>
+              cp.title.toLowerCase().includes(fc.toLowerCase()) ||
+              cp.code.toLowerCase().includes(fc.toLowerCase()) ||
+              fc.toLowerCase().includes(cp.code.toLowerCase())
+          );
+          if (!exists) {
+            certsList.push({
+              id: `gate-focus-${gate.gateNumber}-${fc.toLowerCase().replace(/\s+/g, '-')}`,
+              code: fc,
+              title: fc,
+              category: 'Estratégia',
+              colorTheme: 'sky',
+              status: gate.status === 'Concluído' ? 'Concluída' : 'Planejada',
+              hoursSpent: 0,
+              estimatedHours: 60,
+              totalModules: 0,
+              completedModules: 0,
+              modulesPercentage: 0,
+              hoursPercentage: 0,
+              completionPercentage: gate.status === 'Concluído' ? 100 : 0,
+              isPlaceholder: true,
+            });
+          }
+        });
+      }
+
+      const totSpent = certsList.reduce((acc, c) => acc + c.hoursSpent, 0);
+      const totEst = certsList.reduce((acc, c) => acc + c.estimatedHours, 0);
+      let avgComp = 0;
+      if (gate.status === 'Concluído') {
+        avgComp = 100;
+      } else if (certsList.length > 0) {
+        avgComp = Math.round(
+          certsList.reduce((acc, c) => acc + c.completionPercentage, 0) / certsList.length
+        );
+      }
+
+      return {
+        ...gate,
+        certifications: certsList,
+        averageCompletion: avgComp,
+        totalHoursSpent: Number(totSpent.toFixed(1)),
+        totalEstimatedHours: totEst,
+      };
+    });
+  }, [sortedGates, certifications]);
+
   const activeGate = useMemo(() => {
-    return sortedGates.find((g) => g.status === 'Em Andamento') || sortedGates.find((g) => g.status === 'Futuro') || sortedGates[0];
-  }, [sortedGates]);
+    return (
+      gatesWithProgress.find((g) => g.status === 'Em Andamento') ||
+      gatesWithProgress.find((g) => g.status === 'Futuro') ||
+      gatesWithProgress[0]
+    );
+  }, [gatesWithProgress]);
 
   const upcomingPlannedTasks = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -187,13 +304,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const filteredGates = useMemo(() => {
     if (milestoneFilter === 'in_progress') {
-      return sortedGates.filter((g) => g.status === 'Em Andamento');
+      return gatesWithProgress.filter((g) => g.status === 'Em Andamento');
     }
     if (milestoneFilter === 'upcoming') {
-      return sortedGates.filter((g) => g.status === 'Futuro');
+      return gatesWithProgress.filter((g) => g.status === 'Futuro');
     }
-    return sortedGates;
-  }, [sortedGates, milestoneFilter]);
+    return gatesWithProgress;
+  }, [gatesWithProgress, milestoneFilter]);
 
   // 4. CHART DATA: Weekly Productivity Trend
   const productivityTrendData = useMemo(() => {
@@ -489,7 +606,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           }`}
         >
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-semibold uppercase tracking-wider">Próximo Marco (Gate)</span>
+            <span className="font-semibold uppercase tracking-wider">Marco Atual (Gate)</span>
             <Target className="w-4 h-4 text-amber-500" />
           </div>
           <div className="mt-2">
@@ -500,15 +617,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {activeGate?.period || 'Em execução'} · {activeGate?.status || 'Em Andamento'}
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t text-xs flex items-center justify-between text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800">
-            <span>{activeGate?.deliverables?.length || 3} entregáveis</span>
+          {/* Active Gate Progress Bar */}
+          <div className="mt-2 w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div
+              className="bg-amber-500 h-full rounded-full transition-all duration-500"
+              style={{ width: `${activeGate?.averageCompletion || 0}%` }}
+            />
+          </div>
+          <div className="mt-2 text-xs flex items-center justify-between text-slate-500 dark:text-slate-400">
+            <span className="font-mono tabular-nums font-semibold text-slate-700 dark:text-slate-300">
+              {activeGate?.averageCompletion || 0}% concluído
+            </span>
             <span aria-hidden="true">·</span>
-            <button
-              onClick={() => onNavigateToTab('certs')}
-              className="text-sky-600 dark:text-sky-400 hover:underline font-semibold cursor-pointer"
-            >
-              Ver Roadmap →
-            </button>
+            <span>{activeGate?.certifications?.length || 0} certificações</span>
           </div>
         </div>
 
@@ -834,8 +955,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* Gates List */}
-          <div className="space-y-3.5">
+          {/* Gates List with Certification Progress Visualization */}
+          <div className="space-y-4">
             {filteredGates.map((gate) => {
               const isCurrent = gate.status === 'Em Andamento';
               const isDone = gate.status === 'Concluído';
@@ -843,33 +964,34 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               return (
                 <div
                   key={gate.gateNumber}
-                  className={`p-4 rounded-xl border transition-all ${
+                  className={`p-4 sm:p-5 rounded-xl border transition-all ${
                     isCurrent
                       ? isLight
-                        ? 'bg-white border-amber-400/80 shadow-xs'
-                        : 'bg-slate-900/90 border-amber-500/50 shadow-md'
+                        ? 'bg-white border-amber-400 shadow-sm ring-1 ring-amber-400/30'
+                        : 'bg-slate-900/95 border-amber-500/60 shadow-lg ring-1 ring-amber-500/20'
                       : isLight
-                      ? 'bg-white/80 border-slate-200 hover:border-slate-300'
-                      : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                      ? 'bg-white/85 border-slate-200 hover:border-slate-300'
+                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
                   }`}
                 >
+                  {/* Gate Top Header */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
                       <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 shadow-xs ${
                           isDone
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300'
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300'
                             : isCurrent
-                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300'
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
                             : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
                         }`}
                       >
-                        {isDone ? <CheckCircle2 className="w-4 h-4" /> : `G${gate.gateNumber}`}
+                        {isDone ? <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> : `G${gate.gateNumber}`}
                       </div>
 
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                          <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
                             {gate.title}
                           </h3>
                           <span
@@ -889,18 +1011,153 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </p>
                       </div>
                     </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                        Progresso Geral
+                      </span>
+                      <span className="text-base font-black font-mono tabular-nums text-slate-900 dark:text-white">
+                        {gate.averageCompletion}%
+                      </span>
+                    </div>
                   </div>
+
+                  {/* Gate Overall Progress Bar */}
+                  <div className="mt-3 w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        isDone
+                          ? 'bg-emerald-500'
+                          : isCurrent
+                          ? 'bg-gradient-to-r from-amber-500 via-sky-500 to-indigo-500'
+                          : 'bg-indigo-500'
+                      }`}
+                      style={{ width: `${gate.averageCompletion}%` }}
+                    />
+                  </div>
+
+                  {/* CERTIFICATION PROGRESS BARS (Progresso por Certificação do Marco) */}
+                  {gate.certifications && gate.certifications.length > 0 && (
+                    <div className="mt-4 pt-3.5 border-t border-slate-150 dark:border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        <span className="uppercase tracking-wider text-[11px] flex items-center gap-1.5 font-bold">
+                          <Award className="w-3.5 h-3.5 text-sky-500" />
+                          Progresso das Certificações do Marco:
+                        </span>
+                        <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                          {gate.totalHoursSpent}h de {gate.totalEstimatedHours}h estimadas
+                        </span>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        {gate.certifications.map((cert) => {
+                          const isCertDone = cert.status === 'Concluída' || cert.completionPercentage === 100;
+
+                          return (
+                            <div
+                              key={cert.id}
+                              className={`p-3 rounded-xl border transition-all ${
+                                isLight
+                                  ? 'bg-slate-50/90 border-slate-200/90 hover:border-slate-300'
+                                  : 'bg-slate-950/40 border-slate-800 hover:border-slate-700'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <div className="flex items-center gap-2 truncate">
+                                  <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                                    {cert.code}
+                                  </span>
+                                  {cert.title !== cert.code && (
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate hidden md:inline">
+                                      · {cert.title}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span
+                                    className={`text-xs sm:text-sm font-mono tabular-nums font-black ${
+                                      isCertDone
+                                        ? 'text-emerald-600 dark:text-emerald-400'
+                                        : cert.completionPercentage > 0
+                                        ? 'text-indigo-600 dark:text-sky-400'
+                                        : 'text-slate-400 dark:text-slate-500'
+                                    }`}
+                                  >
+                                    {cert.completionPercentage}%
+                                  </span>
+
+                                  {!cert.isPlaceholder && (
+                                    <button
+                                      onClick={() => onNavigateToTab('certs')}
+                                      className="text-[11px] px-2 py-0.5 rounded font-bold transition cursor-pointer text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-950/60"
+                                      title="Abrir certificação"
+                                    >
+                                      Ver →
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Certification Completion Percentage Bar */}
+                              <div className="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-500 ${
+                                    isCertDone
+                                      ? 'bg-emerald-500'
+                                      : cert.completionPercentage > 0
+                                      ? 'bg-gradient-to-r from-sky-500 to-indigo-600'
+                                      : 'bg-slate-300 dark:bg-slate-700'
+                                  }`}
+                                  style={{ width: `${cert.completionPercentage}%` }}
+                                />
+                              </div>
+
+                              {/* Unboxed Metadata (Zero-Pill discipline) */}
+                              <div className="mt-1.5 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {cert.totalModules > 0 ? (
+                                    <span>
+                                      {cert.completedModules}/{cert.totalModules} módulos ({cert.modulesPercentage}%)
+                                    </span>
+                                  ) : (
+                                    <span>Módulos: Conforme plano</span>
+                                  )}
+                                  <span aria-hidden="true">·</span>
+                                  <span>
+                                    {cert.hoursSpent}h de {cert.estimatedHours}h ({cert.hoursPercentage}%)
+                                  </span>
+                                </div>
+
+                                <span
+                                  className={`font-sans font-semibold text-[10px] sm:text-[11px] ${
+                                    isCertDone
+                                      ? 'text-emerald-600 dark:text-emerald-400'
+                                      : cert.status === 'Em Andamento'
+                                      ? 'text-amber-600 dark:text-amber-400'
+                                      : 'text-slate-400 dark:text-slate-500'
+                                  }`}
+                                >
+                                  {cert.status}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Deliverables snippet */}
                   {gate.deliverables && gate.deliverables.length > 0 && (
-                    <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-xs">
-                      <span className="font-semibold text-slate-500 text-[11px] uppercase tracking-wider">
-                        Entregáveis do Marco:
+                    <div className="mt-3.5 pt-3 border-t border-slate-150 dark:border-slate-800/80 text-xs">
+                      <span className="font-semibold text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider block mb-1">
+                        Entregáveis do Marco ({gate.deliverables.length}):
                       </span>
-                      <ul className="mt-1 space-y-1">
-                        {gate.deliverables.slice(0, 2).map((del, idx) => (
+                      <ul className="space-y-1">
+                        {gate.deliverables.slice(0, 3).map((del, idx) => (
                           <li key={idx} className="flex items-start gap-1.5 text-slate-600 dark:text-slate-300">
-                            <span className="text-sky-500 font-bold shrink-0">•</span>
+                            <span className="text-amber-500 font-bold shrink-0">✓</span>
                             <span className="truncate">{del}</span>
                           </li>
                         ))}

@@ -15,7 +15,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+
+function getCliArg(flag: string): string | undefined {
+  const idx = process.argv.indexOf(flag);
+  return idx !== -1 && idx < process.argv.length - 1 ? process.argv[idx + 1] : undefined;
+}
+
+const cliPort = getCliArg('--port') || (process.env.PORT && process.env.PORT !== '8080' ? process.env.PORT : undefined);
+const PORT = Number(cliPort) || 3000;
+const HOST = getCliArg('--host') || '0.0.0.0';
 
 app.use(express.json({ limit: '20mb' }));
 
@@ -436,8 +444,8 @@ async function startServer() {
     app.use(vite.middlewares);
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
+  app.listen(PORT, HOST, () => {
+    console.log(`Server running on http://${HOST}:${PORT}`);
   });
 }
 
