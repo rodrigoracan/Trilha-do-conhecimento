@@ -15,6 +15,8 @@ import {
   ExternalResource,
   KnowledgeTrack,
   PlannedStudyTask,
+  NotebookBook,
+  TrackResource,
 } from './types';
 import {
   loadDatabase,
@@ -44,10 +46,37 @@ import { GoogleClassroomModal } from './components/GoogleClassroomModal';
 import { GeminiChatModal } from './components/GeminiChatModal';
 import { NotebookGeminiModal } from './components/NotebookGeminiModal';
 import { McpLegislationModal } from './components/McpLegislationModal';
-import { NotebookBook, TrackResource } from './types';
 import { initialNotebooks } from './data/initialData';
 import { auth, googleSignIn, logout } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
+import {
+  LayoutDashboard,
+  FolderTree,
+  Award,
+  Timer,
+  FileText,
+  Calendar,
+  Brain,
+  CheckSquare,
+  Database,
+  Sparkles,
+  Scale,
+  LogOut,
+  Menu,
+  X,
+  Search,
+  User as UserIcon,
+  Loader2,
+  ExternalLink,
+  ChevronRight
+} from 'lucide-react';
+import {
+  GoogleDriveLogo,
+  GoogleClassroomLogo,
+  GoogleGeminiLogo,
+  NotebookLMLogo,
+  GoogleGLogo
+} from './components/Logos';
 
 export default function App() {
   const [database, setDatabase] = useState<AppDatabase>(() => loadDatabase());
@@ -75,6 +104,9 @@ export default function App() {
 
   const [currentUser, setCurrentUser] = useState<User | null>(auth.currentUser);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+  const [sidebarCategory, setSidebarCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState<boolean>(false);
 
   // Gemini AI, Notebook & MCP Modals states
   const [isGeminiChatModalOpen, setIsGeminiChatModalOpen] = useState(false);
@@ -805,256 +837,535 @@ export default function App() {
   };
 
   return (
-    <div
-      className={`min-h-screen flex flex-col antialiased selection:bg-sky-500 selection:text-white transition-colors duration-200 ${
-        theme === 'light' ? 'bg-[#edf4fc] text-slate-900' : 'bg-[#1c3660] text-slate-100'
-      }`}
-    >
-      {/* Container Layout with Maximum Contrast and Depth */}
-      <div className="max-w-[1440px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 space-y-5 flex-1 flex flex-col">
-        {/* Top Header Banner: Title, Trilhas/Módulos Numbers and Theme Toggle ONLY */}
-        <HeaderBanner
-          tracksCount={tracksCount}
-          modulesCount={modulesCount}
-          theme={theme}
-          onToggleTheme={handleToggleTheme}
-          onGoHome={() => {
-            setActiveTab('tracks');
-            setSelectedTrack(null);
-          }}
-          user={currentUser}
-          onLogin={handleGoogleLogin}
-          onLogout={handleLogout}
-          isLoggingIn={isLoggingIn}
-        />
+    <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#0C0C0E] text-white font-['Inter',sans-serif] selection:bg-[#00F0FF] selection:text-[#0C0C0E]">
+      {/* Main Grid Area: Rail (72px) + Dash-Sidebar (290px) + Viewport (flex-1) */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* 1. Mini Nav Rail (Left) */}
+        <aside className="w-[72px] shrink-0 bg-[#141417] border-r border-white/10 flex flex-col items-center py-4 gap-3 z-30 select-none">
+          {/* Logo "R" */}
+          <button
+            onClick={() => {
+              setSelectedTrack(null);
+              setActiveTab('tracks');
+            }}
+            className="w-10 h-10 bg-[#00F0FF] text-[#0C0C0E] font-['Syne',sans-serif] font-black text-xl flex items-center justify-center cursor-pointer shadow-[0_0_14px_rgba(0,240,255,0.45)] hover:scale-105 transition-all mb-2"
+            title="RACAN Central // Trilhas Hub"
+          >
+            R
+          </button>
 
-        {/* Dynamic Dedicated Tools & Integrations Menu Bar */}
-        <ToolsMenuBar
-          onOpenGoogleDriveModal={() => setIsGoogleDriveModalOpen(true)}
-          onOpenGoogleClassroomModal={() => setIsGoogleClassroomModalOpen(true)}
-          onOpenGeminiChat={() => {
-            setGeminiTrackContext(selectedTrack ? selectedTrack.title : '');
-            setIsGeminiChatModalOpen(true);
-          }}
-          onOpenNotebookGemini={() => {
-            setSelectedNotebookBookId('');
-            setIsNotebookModalOpen(true);
-          }}
-          onTogglePomodoro={() => setIsPomodoroWidgetOpen((prev) => !prev)}
-          isPomodoroOpen={isPomodoroWidgetOpen}
-          weeklyHoursLogged={weeklyHoursLogged}
-          onOpenSimuladosModal={() => setIsSimuladosModalOpen(true)}
-          onOpenDatabaseModal={() => setIsDatabaseModalOpen(true)}
-          onOpenMcpModal={() => setIsMcpModalOpen(true)}
-          theme={theme}
-        />
+          {/* Primary Nav Icons */}
+          <div className="flex flex-col items-center gap-2 w-full px-3">
+            {[
+              { id: 'dashboard' as ActiveTab, icon: LayoutDashboard, label: 'Dashboard' },
+              { id: 'tracks' as ActiveTab, icon: FolderTree, label: 'Trilhas Hub' },
+              { id: 'certs' as ActiveTab, icon: Award, label: 'Certificações TI' },
+              { id: 'pomodoro' as ActiveTab, icon: Timer, label: 'Pomodoro Focus' },
+              { id: 'notes' as ActiveTab, icon: FileText, label: 'Caderno / Notas' },
+              { id: 'planner' as ActiveTab, icon: Calendar, label: 'Planejamento' },
+              { id: 'techniques' as ActiveTab, icon: Brain, label: 'Técnicas' },
+              { id: 'reminders' as ActiveTab, icon: CheckSquare, label: 'Ações / Checklist' },
+            ].map((item) => {
+              const active = activeTab === item.id;
+              const IconComp = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    if (item.id === 'tracks') setSelectedTrack(null);
+                    setActiveTab(item.id);
+                  }}
+                  className={`nav-rail-icon rounded-none ${active ? 'active' : ''}`}
+                  title={item.label}
+                  aria-label={item.label}
+                >
+                  <IconComp className="w-4 h-4" />
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Clean, Objective Navigation Tabs */}
-        <Navbar
-          activeTab={activeTab}
-          onSelectTab={setActiveTab}
-          pendingRemindersCount={pendingRemindersCount}
-          notesCount={database.notes.length}
-          plannedTasksCount={(database.plannedTasks || []).filter((t) => !t.completed).length}
-          theme={theme}
-        />
+          <div className="w-8 h-[1px] bg-white/10 my-1" />
 
-        {/* Main Tab Content */}
-        <main className="flex-1 pb-12">
-          {activeTab === 'tracks' && (
-            selectedTrack ? (
-              <TrackDetailView
-                track={selectedTrack}
-                onBackToTracks={handleBackToTracks}
-                onUpdateTrack={handleUpdateTrack}
-                onStartPomodoroForTrack={(trackTitle, itemTitle) => {
-                  setSelectedCertIdForFocus(`${trackTitle}${itemTitle ? ` - ${itemTitle}` : ''}`);
+          {/* Utility Tools Icons */}
+          <div className="flex flex-col items-center gap-2 w-full px-3">
+            <button
+              onClick={() => setIsGoogleDriveModalOpen(true)}
+              className="nav-rail-icon rounded-none"
+              title="Google Drive"
+            >
+              <GoogleDriveLogo className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setIsGoogleClassroomModalOpen(true)}
+              className="nav-rail-icon rounded-none"
+              title="Google Classroom"
+            >
+              <GoogleClassroomLogo className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                setGeminiTrackContext(selectedTrack ? selectedTrack.title : '');
+                setIsGeminiChatModalOpen(true);
+              }}
+              className="nav-rail-icon rounded-none"
+              title="Gemini AI"
+            >
+              <GoogleGeminiLogo className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                setSelectedNotebookBookId('');
+                setIsNotebookModalOpen(true);
+              }}
+              className="nav-rail-icon rounded-none"
+              title="NotebookLM"
+            >
+              <NotebookLMLogo className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setIsDatabaseModalOpen(true)}
+              className="nav-rail-icon rounded-none"
+              title="Banco de Dados / Backup"
+            >
+              <Database className="w-4 h-4 text-[#00F0FF]" />
+            </button>
+          </div>
+
+          {/* Bottom user avatar / login */}
+          <div className="mt-auto flex flex-col items-center gap-2">
+            {currentUser ? (
+              <div
+                className="w-9 h-9 border border-[#00F0FF]/60 bg-[#0C0C0E] flex items-center justify-center cursor-pointer relative group"
+                title={`Conectado como ${currentUser.displayName || currentUser.email}`}
+              >
+                {currentUser.photoURL ? (
+                  <img src={currentUser.photoURL} alt="User" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="font-mono text-xs font-bold text-[#00F0FF]">
+                    {(currentUser.displayName || currentUser.email || 'U')[0].toUpperCase()}
+                  </span>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="absolute left-12 top-0 hidden group-hover:flex items-center gap-1.5 px-2.5 py-1.5 bg-[#141417] border border-rose-500/50 text-rose-400 font-mono text-[11px] whitespace-nowrap shadow-xl z-50"
+                  title="Desconectar"
+                >
+                  <LogOut className="w-3 h-3" /> SAIR
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleGoogleLogin}
+                disabled={isLoggingIn}
+                className="w-9 h-9 border border-white/20 bg-[#141417] hover:border-[#00F0FF] flex items-center justify-center cursor-pointer transition text-white/70 hover:text-white"
+                title="Entrar com o Google"
+              >
+                {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin text-[#00F0FF]" /> : <GoogleGLogo className="w-4 h-4" />}
+              </button>
+            )}
+          </div>
+        </aside>
+
+        {/* 2. Dashboard Menu Sidebar (Center-Left) */}
+        <aside
+          className={`w-[290px] shrink-0 bg-[#0C0C0E] border-r border-white/10 p-5 flex flex-col gap-6 overflow-y-auto select-none transition-all ${
+            isMobileSidebarOpen
+              ? 'fixed inset-y-0 left-[72px] z-40 w-72 bg-[#0C0C0E] shadow-2xl flex'
+              : 'hidden md:flex'
+          }`}
+        >
+          {/* Header */}
+          <div className="app-header space-y-1">
+            <span className="label-tech text-[#00F0FF]">Central Station</span>
+            <h1 className="font-['Syne',sans-serif] text-2xl font-black uppercase tracking-tight text-white leading-none">
+              Study<br />Hub_OS
+            </h1>
+          </div>
+
+          {/* Stat Grid */}
+          <div className="stat-grid grid grid-cols-2 gap-[1px] bg-white/10 border border-white/10">
+            <div className="stat-item bg-[#0C0C0E] p-3">
+              <span className="label-tech block text-white/50">Trilhas</span>
+              <div className="stat-value font-mono text-xl font-bold text-white tabular-nums">
+                {String(tracksCount).padStart(2, '0')}
+              </div>
+            </div>
+            <div className="stat-item bg-[#0C0C0E] p-3">
+              <span className="label-tech block text-white/50">Módulos</span>
+              <div className="stat-value font-mono text-xl font-bold text-white tabular-nums">
+                {String(modulesCount).padStart(2, '0')}
+              </div>
+            </div>
+            <div className="stat-item bg-[#0C0C0E] p-3">
+              <span className="label-tech block text-white/50">Certs TI</span>
+              <div className="stat-value font-mono text-xl font-bold text-[#00F0FF] tabular-nums">
+                {String(database.certifications.length).padStart(2, '0')}
+              </div>
+            </div>
+            <div className="stat-item bg-[#0C0C0E] p-3">
+              <span className="label-tech block text-white/50">Horas Foco</span>
+              <div className="stat-value font-mono text-xl font-bold text-[#00F0FF] tabular-nums">
+                {weeklyHoursLogged}h
+              </div>
+            </div>
+          </div>
+
+          {/* Search Area */}
+          <div className="search-area bg-[#141417] border border-white/10 p-2.5 flex items-center gap-2">
+            <span className="font-mono text-[#00F0FF] text-xs font-bold">&gt;</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="RUN SEARCH_"
+              className="bg-transparent border-none text-white font-mono text-xs w-full outline-none placeholder:text-white/30"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-white/40 hover:text-white font-mono text-xs"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Directory Navigation */}
+          <nav className="space-y-2">
+            <span className="label-tech block text-white/50">Directory</span>
+            <div className="flex flex-col gap-1 font-mono text-xs">
+              {[
+                { id: 'all', label: 'Root_All' },
+                { id: 'Gov_Laws', label: 'Gov_Laws' },
+                { id: 'Cert_Hub', label: 'Cert_Hub' },
+                { id: 'IA_Research', label: 'IA_Research' },
+                { id: 'Security', label: 'Security' },
+                { id: 'Mentorship', label: 'Mentorship' },
+                { id: 'Tech_Business', label: 'Tech_Business' },
+              ].map((cat) => {
+                const active = sidebarCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setSidebarCategory(cat.id);
+                      if (activeTab !== 'tracks') setActiveTab('tracks');
+                    }}
+                    className={`text-left py-1.5 px-2 transition flex items-center gap-2 cursor-pointer ${
+                      active
+                        ? 'text-[#00F0FF] font-bold bg-[#00F0FF]/10 border-l-2 border-[#00F0FF]'
+                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="text-white/40">[{active ? 'x' : ' '}]</span>
+                    <span>{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+
+          {/* New Track Action Button */}
+          <button
+            onClick={() => {
+              setTrackToEdit(null);
+              setIsCreateTrackModalOpen(true);
+            }}
+            className="btn-tech mt-auto w-full"
+          >
+            + Initialize_New_Track
+          </button>
+        </aside>
+
+        {/* 3. Main Viewport (Right) */}
+        <main className="viewport flex-1 flex flex-col overflow-hidden bg-radial from-[#141417] via-[#0E0E11] to-[#0C0C0E] relative">
+          <div className="dot-matrix absolute inset-0 pointer-events-none z-0" />
+
+          {/* Top Bar Command Strip */}
+          <div className="relative z-10 px-5 sm:px-6 py-3 border-b border-white/10 bg-[#0C0C0E]/95 backdrop-blur-md flex items-center justify-between gap-4 shrink-0">
+            {/* Breadcrumb & Mobile Menu Toggle */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsMobileSidebarOpen((prev) => !prev)}
+                className="md:hidden p-1.5 text-white/70 hover:text-white border border-white/10 bg-[#141417] cursor-pointer"
+                title="Toggle Directory"
+              >
+                {isMobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              </button>
+
+              <div className="flex items-center gap-2 font-mono text-xs text-white/60">
+                <span className="text-[#00F0FF] font-bold">RACAN_OS</span>
+                <span>//</span>
+                <span className="text-white uppercase font-bold">
+                  {activeTab === 'tracks' ? (selectedTrack ? selectedTrack.title : 'TRILHAS_HUB') : activeTab.toUpperCase()}
+                </span>
+                {selectedTrack && (
+                  <>
+                    <span>//</span>
+                    <button
+                      onClick={handleBackToTracks}
+                      className="text-[#00F0FF] hover:underline cursor-pointer"
+                    >
+                      [VOLTAR_AO_HUB]
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Actions & Google Auth */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setIsMcpModalOpen(true)}
+                className="btn-tech-subtle px-2.5 py-1 text-[11px] gap-1.5"
+                title="Legislações & MCP"
+              >
+                <Scale className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">LEGISLAÇÕES_MCP</span>
+              </button>
+
+              <button
+                onClick={() => setIsSimuladosModalOpen(true)}
+                className="btn-tech-subtle px-2.5 py-1 text-[11px] gap-1.5"
+                title="Simulados"
+              >
+                <Award className="w-3.5 h-3.5 text-teal-400" />
+                <span className="hidden sm:inline">SIMULADOS</span>
+              </button>
+
+              <button
+                onClick={() => setIsDatabaseModalOpen(true)}
+                className="btn-tech-subtle px-2.5 py-1 text-[11px] gap-1.5 text-[#00F0FF] border-[#00F0FF]/30"
+                title="Backup & Database"
+              >
+                <Database className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">BACKUP</span>
+              </button>
+
+              {currentUser ? (
+                <div className="flex items-center gap-2 pl-2 border-l border-white/10">
+                  <span className="text-[11px] font-mono text-emerald-400 hidden xl:inline">
+                    {currentUser.displayName || currentUser.email?.split('@')[0]}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="p-1 text-white/40 hover:text-rose-400 cursor-pointer"
+                    title="Desconectar"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleGoogleLogin}
+                  disabled={isLoggingIn}
+                  className="btn-tech px-2.5 py-1 text-[11px] flex items-center gap-1.5 ml-2"
+                >
+                  {isLoggingIn ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <GoogleGLogo className="w-3.5 h-3.5" />
+                  )}
+                  <span>LOGIN_GOOGLE</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Viewport Dynamic Content */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative z-10">
+            {activeTab === 'tracks' && (
+              selectedTrack ? (
+                <TrackDetailView
+                  track={selectedTrack}
+                  onBackToTracks={handleBackToTracks}
+                  onUpdateTrack={handleUpdateTrack}
+                  onStartPomodoroForTrack={(trackTitle, itemTitle) => {
+                    setSelectedCertIdForFocus(`${trackTitle}${itemTitle ? ` - ${itemTitle}` : ''}`);
+                    setIsPomodoroWidgetOpen(true);
+                  }}
+                  onOpenGeminiChat={(ctx) => {
+                    setGeminiTrackContext(ctx || selectedTrack.title);
+                    setIsGeminiChatModalOpen(true);
+                  }}
+                  onOpenNotebookGemini={(trackId) => {
+                    const match = (database.notebooks || initialNotebooks).find(
+                      (nb) => nb.trackId === trackId || nb.trackId === selectedTrack.slug
+                    );
+                    if (match) setSelectedNotebookBookId(match.id);
+                    setIsNotebookModalOpen(true);
+                  }}
+                  theme="dark"
+                  studySessions={database.studySessions}
+                  onLogStudyHours={(hours, trackTitle) => handleLogManualHours(hours, trackTitle)}
+                  notes={database.notes}
+                  onSaveNote={handleSaveNote}
+                  onDeleteNote={handleDeleteNote}
+                  onOpenNotesForModule={(trackId, subcategoryId) => {
+                    setSelectedTrackIdForNotes(trackId);
+                    setSelectedSubcategoryIdForNotes(subcategoryId || '');
+                    setActiveTab('notes');
+                  }}
+                />
+              ) : (
+                <TracksHubView
+                  tracks={database.knowledgeTracks || []}
+                  certifications={database.certifications}
+                  onOpenTrack={handleOpenTrack}
+                  onOpenCertifications={handleOpenCertifications}
+                  onOpenCreateTrackModal={() => {
+                    setTrackToEdit(null);
+                    setIsCreateTrackModalOpen(true);
+                  }}
+                  onEditTrack={(t) => {
+                    setTrackToEdit(t);
+                    setIsCreateTrackModalOpen(true);
+                  }}
+                  onDeleteTrack={handleDeleteTrack}
+                  searchTerm={searchQuery}
+                  selectedCategory={sidebarCategory}
+                />
+              )
+            )}
+
+            {activeTab === 'dashboard' && (
+              <DashboardView
+                certifications={database.certifications}
+                studySessions={database.studySessions}
+                gates={database.scheduleGates}
+                plannedTasks={database.plannedTasks || []}
+                reminders={database.reminders}
+                knowledgeTracks={database.knowledgeTracks || []}
+                targetHoursWeekly={database.config?.targetHoursWeekly || 11}
+                onNavigateToTab={(tab) => {
+                  setSelectedTrack(null);
+                  setActiveTab(tab);
+                }}
+                onStartPomodoro={(target) => {
+                  if (target) setSelectedCertIdForFocus(target);
                   setIsPomodoroWidgetOpen(true);
                 }}
-                onOpenGeminiChat={(ctx) => {
-                  setGeminiTrackContext(ctx || selectedTrack.title);
-                  setIsGeminiChatModalOpen(true);
-                }}
-                onOpenNotebookGemini={(trackId) => {
-                  const match = (database.notebooks || initialNotebooks).find(
-                    (nb) => nb.trackId === trackId || nb.trackId === selectedTrack.slug
-                  );
-                  if (match) setSelectedNotebookBookId(match.id);
-                  setIsNotebookModalOpen(true);
-                }}
-                theme={theme}
-                studySessions={database.studySessions}
-                onLogStudyHours={(hours, trackTitle) => handleLogManualHours(hours, trackTitle)}
-                notes={database.notes}
-                onSaveNote={handleSaveNote}
-                onDeleteNote={handleDeleteNote}
-                onOpenNotesForModule={(trackId, subcategoryId) => {
-                  setSelectedTrackIdForNotes(trackId);
-                  setSelectedSubcategoryIdForNotes(subcategoryId || '');
-                  setActiveTab('notes');
-                }}
+                onLogManualHours={handleLogManualHours}
+                theme="dark"
               />
-            ) : (
-              <TracksHubView
+            )}
+
+            {activeTab === 'planner' && (
+              <StudyPlannerCalendarView
+                plannedTasks={database.plannedTasks || []}
                 tracks={database.knowledgeTracks || []}
                 certifications={database.certifications}
-                onOpenTrack={handleOpenTrack}
-                onOpenCertifications={handleOpenCertifications}
-                onOpenCreateTrackModal={() => {
-                  setTrackToEdit(null);
-                  setIsCreateTrackModalOpen(true);
-                }}
-                onEditTrack={(t) => {
-                  setTrackToEdit(t);
-                  setIsCreateTrackModalOpen(true);
-                }}
-                onDeleteTrack={handleDeleteTrack}
-                theme={theme}
+                onAddPlannedTask={handleAddPlannedTask}
+                onUpdatePlannedTask={handleUpdatePlannedTask}
+                onDeletePlannedTask={handleDeletePlannedTask}
+                onTogglePlannedTask={handleTogglePlannedTask}
+                theme="dark"
               />
-            )
-          )}
+            )}
 
-          {activeTab === 'dashboard' && (
-            <DashboardView
-              certifications={database.certifications}
-              studySessions={database.studySessions}
-              gates={database.scheduleGates}
-              plannedTasks={database.plannedTasks || []}
-              reminders={database.reminders}
-              knowledgeTracks={database.knowledgeTracks || []}
-              targetHoursWeekly={database.config?.targetHoursWeekly || 11}
-              onNavigateToTab={(tab) => {
-                setSelectedTrack(null);
-                setActiveTab(tab);
-              }}
-              onStartPomodoro={(target) => {
-                if (target) setSelectedCertIdForFocus(target);
-                setIsPomodoroWidgetOpen(true);
-              }}
-              onLogManualHours={handleLogManualHours}
-              theme={theme}
-            />
-          )}
+            {activeTab === 'certs' && (
+              <CertificationsView
+                certifications={database.certifications}
+                onBackToTracks={handleBackToTracks}
+                onUpdateCert={handleUpdateCert}
+                onDeleteCert={handleDeleteCert}
+                onOpenCreateModal={() => {
+                  setCertToEdit(null);
+                  setIsCertModalOpen(true);
+                }}
+                onOpenEditModal={(cert) => {
+                  setCertToEdit(cert);
+                  setIsCertModalOpen(true);
+                }}
+                onOpenAddResourceModal={(cert) => {
+                  setCertForResource(cert);
+                  setIsResourceModalOpen(true);
+                }}
+                onOpenSimuladosForCert={(cert) => {
+                  setCertForSimulados(cert);
+                  setIsSimuladosModalOpen(true);
+                }}
+                onStartFeynmanForCert={(cert) => {
+                  setSelectedCertIdForFocus(cert.id);
+                  setActiveTab('techniques');
+                }}
+                onOpenNotesForCert={(cert) => {
+                  setSelectedCertIdForFocus(cert.id);
+                  setActiveTab('notes');
+                }}
+                theme="dark"
+              />
+            )}
 
-          {activeTab === 'planner' && (
-            <StudyPlannerCalendarView
-              plannedTasks={database.plannedTasks || []}
-              tracks={database.knowledgeTracks || []}
-              certifications={database.certifications}
-              onAddPlannedTask={handleAddPlannedTask}
-              onUpdatePlannedTask={handleUpdatePlannedTask}
-              onDeletePlannedTask={handleDeletePlannedTask}
-              onTogglePlannedTask={handleTogglePlannedTask}
-              theme={theme}
-            />
-          )}
+            {activeTab === 'pomodoro' && (
+              <PomodoroView
+                certifications={database.certifications}
+                selectedCertId={selectedCertIdForFocus}
+                onSelectCertId={setSelectedCertIdForFocus}
+                onSessionComplete={handleSessionComplete}
+                studySessions={database.studySessions}
+              />
+            )}
 
-          {activeTab === 'certs' && (
-            <CertificationsView
-              certifications={database.certifications}
-              onBackToTracks={handleBackToTracks}
-              onUpdateCert={handleUpdateCert}
-              onDeleteCert={handleDeleteCert}
-              onOpenCreateModal={() => {
-                setCertToEdit(null);
-                setIsCertModalOpen(true);
-              }}
-              onOpenEditModal={(cert) => {
-                setCertToEdit(cert);
-                setIsCertModalOpen(true);
-              }}
-              onOpenAddResourceModal={(cert) => {
-                setCertForResource(cert);
-                setIsResourceModalOpen(true);
-              }}
-              onOpenSimuladosForCert={(cert) => {
-                setCertForSimulados(cert);
-                setIsSimuladosModalOpen(true);
-              }}
-              onStartFeynmanForCert={(cert) => {
-                setSelectedCertIdForFocus(cert.id);
-                setActiveTab('techniques');
-              }}
-              onOpenNotesForCert={(cert) => {
-                setSelectedCertIdForFocus(cert.id);
-                setActiveTab('notes');
-              }}
-              theme={theme}
-            />
-          )}
+            {activeTab === 'techniques' && (
+              <StudyTechniquesView
+                certifications={database.certifications}
+                flashcards={database.flashcards}
+                onUpdateFlashcards={handleUpdateFlashcards}
+                onSaveFeynmanNote={(noteData) => {
+                  const newNote: StudyNote = {
+                    ...noteData,
+                    id: `note-${Date.now()}`,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  };
+                  handleSaveNote(newNote);
+                }}
+                selectedCertId={selectedCertIdForFocus}
+              />
+            )}
 
-          {activeTab === 'pomodoro' && (
-            <PomodoroView
-              certifications={database.certifications}
-              selectedCertId={selectedCertIdForFocus}
-              onSelectCertId={setSelectedCertIdForFocus}
-              onSessionComplete={handleSessionComplete}
-              studySessions={database.studySessions}
-            />
-          )}
+            {activeTab === 'notes' && (
+              <NotesView
+                notes={database.notes}
+                certifications={database.certifications}
+                tracks={database.knowledgeTracks || []}
+                onSaveNote={handleSaveNote}
+                onDeleteNote={handleDeleteNote}
+                selectedCertId={selectedCertIdForFocus}
+                selectedTrackId={selectedTrackIdForNotes}
+                selectedSubcategoryId={selectedSubcategoryIdForNotes}
+                theme="dark"
+              />
+            )}
 
-          {activeTab === 'techniques' && (
-            <StudyTechniquesView
-              certifications={database.certifications}
-              flashcards={database.flashcards}
-              onUpdateFlashcards={handleUpdateFlashcards}
-              onSaveFeynmanNote={(noteData) => {
-                const newNote: StudyNote = {
-                  ...noteData,
-                  id: `note-${Date.now()}`,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                };
-                handleSaveNote(newNote);
-              }}
-              selectedCertId={selectedCertIdForFocus}
-            />
-          )}
-
-          {activeTab === 'notes' && (
-            <NotesView
-              notes={database.notes}
-              certifications={database.certifications}
-              tracks={database.knowledgeTracks || []}
-              onSaveNote={handleSaveNote}
-              onDeleteNote={handleDeleteNote}
-              selectedCertId={selectedCertIdForFocus}
-              selectedTrackId={selectedTrackIdForNotes}
-              selectedSubcategoryId={selectedSubcategoryIdForNotes}
-              theme={theme}
-            />
-          )}
-
-          {activeTab === 'reminders' && (
-            <RemindersView
-              reminders={database.reminders}
-              certifications={database.certifications}
-              onToggleReminder={handleToggleReminder}
-              onAddReminder={handleAddReminder}
-              onDeleteReminder={handleDeleteReminder}
-            />
-          )}
-        </main>
-
-        <footer className={`pt-4 border-t text-xs flex flex-col sm:flex-row items-center justify-between gap-2 transition-colors ${
-          theme === 'light' ? 'border-slate-200 text-slate-500' : 'border-slate-800/80 text-slate-500'
-        }`}>
-          <div>Trilha de Estudos RACAN · Hub de Conhecimento, Certificações & Estratégia Tecnológica</div>
-          <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px] flex-wrap justify-center">
-            <span>Certificações de TI</span>
-            <span>·</span>
-            <span>Data Science & IA</span>
-            <span>·</span>
-            <span>Ethical Hacker</span>
-            <span>·</span>
-            <span>Mentoria RACAN</span>
-            <span>·</span>
-            <span>Business Tech</span>
-            <span>·</span>
-            <span>Canal do YouTube</span>
+            {activeTab === 'reminders' && (
+              <RemindersView
+                reminders={database.reminders}
+                certifications={database.certifications}
+                onToggleReminder={handleToggleReminder}
+                onAddReminder={handleAddReminder}
+                onDeleteReminder={handleDeleteReminder}
+              />
+            )}
           </div>
-        </footer>
+        </main>
       </div>
+
+      {/* 4. Bottom Status Bar - Variation 3 */}
+      <footer className="status-bar h-9 shrink-0 bg-[#141417] border-t border-white/10 px-4 sm:px-6 flex items-center justify-between text-xs font-mono text-white/50 z-30 select-none">
+        <div className="label-tech text-white/60">
+          STATUS: <span className="text-emerald-400 font-bold">ONLINE</span> // USER: <span className="text-white font-semibold">{currentUser?.displayName || currentUser?.email || 'Rodrigo Rahal Canado'}</span>
+        </div>
+        <div className="label-tech text-white/40 hidden md:block">
+          RACAN HUB NETWORK // 2026.11.06
+        </div>
+        <div className="label-tech text-[#00F0FF] font-bold flex items-center gap-1.5">
+          <span>SYSTEM READY_</span>
+          <span className="inline-block w-1.5 h-3 bg-[#00F0FF] animate-pulse" />
+        </div>
+      </footer>
 
       {/* Global Modals */}
       <TrackEditModal
