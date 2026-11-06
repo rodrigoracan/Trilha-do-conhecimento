@@ -256,6 +256,42 @@ app.post('/api/study-sessions', requireAuth, async (req: AuthRequest, res: Respo
   }
 });
 
+// Pull all data for user from Cloud SQL
+app.get('/api/cloudsql/pull-all', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const uid = req.user?.uid;
+    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+
+    const certRows = await db.select().from(certificationsTable).where(eq(certificationsTable.userId, uid));
+    const noteRows = await db.select().from(notesTable).where(eq(notesTable.userId, uid));
+    const sessionRows = await db.select().from(studySessionsTable).where(eq(studySessionsTable.userId, uid));
+
+    const parsedCerts = certRows.map((r) => ({
+      ...r,
+      modules: r.modules ? JSON.parse(r.modules) : [],
+      externalResources: r.externalResources ? JSON.parse(r.externalResources) : [],
+      simulados: r.simulados ? JSON.parse(r.simulados) : [],
+    }));
+
+    const parsedNotes = noteRows.map((r) => ({
+      ...r,
+      tags: r.tags ? JSON.parse(r.tags) : [],
+      attachments: r.attachments ? JSON.parse(r.attachments) : [],
+      links: r.links ? JSON.parse(r.links) : [],
+      feynmanDetails: r.feynmanDetails ? JSON.parse(r.feynmanDetails) : undefined,
+    }));
+
+    res.json({
+      certifications: parsedCerts,
+      notes: parsedNotes,
+      studySessions: sessionRows,
+    });
+  } catch (error: any) {
+    console.error('Error pulling all data from Cloud SQL:', error);
+    res.status(500).json({ error: 'Erro ao buscar dados completos na nuvem' });
+  }
+});
+
 // Bulk sync all database items from client to Cloud SQL
 app.post('/api/cloudsql/sync-all', requireAuth, async (req: AuthRequest, res: Response) => {
   try {

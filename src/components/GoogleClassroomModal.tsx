@@ -37,7 +37,7 @@ import {
   createClassroomCourseWork,
   deleteClassroomCourseWork
 } from '../utils/googleClassroom';
-import { googleSignIn, logout, auth } from '../lib/firebase';
+import { googleWorkspaceSignIn, logout, auth } from '../lib/firebase';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { KnowledgeTrack, Certification } from '../types';
 
@@ -165,7 +165,7 @@ export const GoogleClassroomModal: React.FC<GoogleClassroomModalProps> = ({
     setLoading(true);
     setErrorMessage(null);
     try {
-      await googleSignIn();
+      await googleWorkspaceSignIn();
       setSuccessMessage('Conectado com sucesso ao Google Classroom!');
       setTimeout(() => setSuccessMessage(null), 3000);
       await loadCourses();

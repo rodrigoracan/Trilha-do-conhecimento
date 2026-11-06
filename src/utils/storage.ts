@@ -151,7 +151,9 @@ export function saveDatabase(db: AppDatabase): void {
   if (typeof window === 'undefined') return;
   try {
     db.lastUpdated = new Date().toISOString();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    const serialized = JSON.stringify(db);
+    localStorage.setItem(STORAGE_KEY, serialized);
+    localStorage.setItem('trilha_safety_snapshot', serialized);
   } catch (err) {
     console.error('Falha ao salvar no banco local:', err);
   }
@@ -196,6 +198,13 @@ export function importBackupJSON(file: File): Promise<AppDatabase> {
         if (!parsed.certifications || !Array.isArray(parsed.certifications)) {
           throw new Error('Formato de arquivo de backup inválido.');
         }
+        // Save current as rollback before overwriting
+        if (typeof window !== 'undefined') {
+          const current = localStorage.getItem(STORAGE_KEY);
+          if (current) {
+            localStorage.setItem('trilha_backup_pre_import', current);
+          }
+        }
         saveDatabase(parsed);
         resolve(parsed);
       } catch (err) {
@@ -206,3 +215,98 @@ export function importBackupJSON(file: File): Promise<AppDatabase> {
     reader.readAsText(file);
   });
 }
+
+export interface StorageSnapshotInfo {
+  key: string;
+  label: string;
+  lastUpdated: string;
+  certCount: number;
+  certTitles: string[];
+  notesCount: number;
+  sessionsCount: number;
+  approxSizeKb: number;
+  isActive: boolean;
+}
+
+export function listAvailableSnapshots(): StorageSnapshotInfo[] {
+  if (typeof window === 'undefined') return [];
+  const results: StorageSnapshotInfo[] = [];
+
+  const candidateKeys = new Set<string>([
+    STORAGE_KEY,
+    'trilha_estudos_ia_data_v3',
+    'trilha_estudos_ia_data_v2',
+    'trilha_estudos_ia_data_v1',
+    'trilha_backup_pre_import',
+    'trilha_safety_snapshot',
+  ]);
+
+  // Scan all localStorage keys for any other trilha / backup occurrences
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && (k.startsWith('trilha_') || k.startsWith('backup_') || k.includes('trilha'))) {
+      candidateKeys.add(k);
+    }
+  }
+
+  candidateKeys.forEach((key) => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw);
+      if (
+        parsed &&
+        (Array.isArray(parsed.certifications) ||
+          Array.isArray(parsed.notes) ||
+          Array.isArray(parsed.knowledgeTracks))
+      ) {
+        const certs: Certification[] = Array.isArray(parsed.certifications) ? parsed.certifications : [];
+        const certTitles = certs.map((c) => c.title || c.code).filter(Boolean).slice(0, 4);
+
+        let label = key;
+        if (key === STORAGE_KEY) label = 'Versão Ativa Atual (Local)';
+        else if (key === 'trilha_estudos_ia_data_v3') label = 'Versão Histórica v3';
+        else if (key === 'trilha_estudos_ia_data_v2') label = 'Versão Histórica v2';
+        else if (key === 'trilha_estudos_ia_data_v1') label = 'Versão Histórica v1';
+        else if (key === 'trilha_backup_pre_import') label = 'Cópia Prévia (Antes de Importar)';
+        else if (key === 'trilha_safety_snapshot') label = 'Snapshot Automático de Segurança';
+
+        results.push({
+          key,
+          label,
+          lastUpdated: parsed.lastUpdated || 'Data desconhecida',
+          certCount: certs.length,
+          certTitles,
+          notesCount: Array.isArray(parsed.notes) ? parsed.notes.length : 0,
+          sessionsCount: Array.isArray(parsed.studySessions) ? parsed.studySessions.length : 0,
+          approxSizeKb: Math.round((raw.length * 2) / 1024),
+          isActive: key === STORAGE_KEY,
+        });
+      }
+    } catch {
+      // Ignore unparseable keys
+    }
+  });
+
+  return results;
+}
+
+export function restoreSnapshot(key: string): AppDatabase {
+  if (typeof window === 'undefined') return getDefaultDatabase();
+  const raw = localStorage.getItem(key);
+  if (!raw) {
+    throw new Error(`Snapshot ${key} não encontrado no navegador.`);
+  }
+
+  // Backup current state before restoring
+  const current = localStorage.getItem(STORAGE_KEY);
+  if (current) {
+    localStorage.setItem('trilha_rollback_before_restore', current);
+  }
+
+  // Save selected snapshot as active
+  localStorage.setItem(STORAGE_KEY, raw);
+  return loadDatabase();
+}
+

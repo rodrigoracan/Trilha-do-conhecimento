@@ -12,30 +12,23 @@ import firebaseConfig from '../../firebase-applet-config.json';
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-export const googleProvider = new GoogleAuthProvider();
-// Google Drive scopes for reading, saving, and managing study materials
-googleProvider.addScope('https://www.googleapis.com/auth/drive');
-googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
+// 1. Standard Google Auth Provider:
+// Contains ONLY standard authentication scopes (profile, email, openid).
+// Never triggers "Google não verificou esse app" during normal login and cloud sync!
+export const googleAuthProvider = new GoogleAuthProvider();
+googleAuthProvider.addScope('email');
+googleAuthProvider.addScope('profile');
+googleAuthProvider.addScope('openid');
 
-// Google Classroom scopes for courses, coursework, materials, announcements and topics
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.courses');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.courses.readonly');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.coursework.me');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.coursework.me.readonly');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.coursework.students');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.coursework.students.readonly');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.courseworkmaterials');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.announcements');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.announcements.readonly');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.topics');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.topics.readonly');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.rosters');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.rosters.readonly');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.profile.emails');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.profile.photos');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.student-submissions.me.readonly');
-googleProvider.addScope('https://www.googleapis.com/auth/classroom.student-submissions.students.readonly');
+// 2. Google Workspace Provider:
+// Only requested when the user explicitly accesses Google Drive or Google Classroom features.
+export const googleWorkspaceProvider = new GoogleAuthProvider();
+googleWorkspaceProvider.addScope('email');
+googleWorkspaceProvider.addScope('profile');
+googleWorkspaceProvider.addScope('openid');
+googleWorkspaceProvider.addScope('https://www.googleapis.com/auth/drive.file');
+googleWorkspaceProvider.addScope('https://www.googleapis.com/auth/classroom.courses.readonly');
+googleWorkspaceProvider.addScope('https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly');
 
 // In-memory caching for OAuth access token
 let isSigningIn = false;
@@ -55,10 +48,14 @@ export const initAuth = (
   });
 };
 
+/**
+ * Main sign-in function for the platform, header button, and cloud database sync.
+ * Clean, standard OAuth flow with no restricted Google scopes.
+ */
 export const googleSignIn = async (): Promise<{ user: User; accessToken: string | null } | null> => {
   try {
     isSigningIn = true;
-    const result = await signInWithPopup(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleAuthProvider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
     if (credential?.accessToken) {
       cachedAccessToken = credential.accessToken;
@@ -66,6 +63,26 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
     console.error('Sign in error:', error);
+    throw error;
+  } finally {
+    isSigningIn = false;
+  }
+};
+
+/**
+ * Workspace sign-in specifically for Google Drive and Google Classroom modals.
+ */
+export const googleWorkspaceSignIn = async (): Promise<{ user: User; accessToken: string | null } | null> => {
+  try {
+    isSigningIn = true;
+    const result = await signInWithPopup(auth, googleWorkspaceProvider);
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    if (credential?.accessToken) {
+      cachedAccessToken = credential.accessToken;
+    }
+    return { user: result.user, accessToken: cachedAccessToken };
+  } catch (error: any) {
+    console.error('Workspace sign in error:', error);
     throw error;
   } finally {
     isSigningIn = false;

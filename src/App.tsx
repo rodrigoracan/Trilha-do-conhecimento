@@ -46,7 +46,7 @@ import { NotebookGeminiModal } from './components/NotebookGeminiModal';
 import { McpLegislationModal } from './components/McpLegislationModal';
 import { NotebookBook, TrackResource } from './types';
 import { initialNotebooks } from './data/initialData';
-import { auth } from './lib/firebase';
+import { auth, googleSignIn, logout } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
 export default function App() {
@@ -73,6 +73,9 @@ export default function App() {
   const [isGoogleClassroomModalOpen, setIsGoogleClassroomModalOpen] = useState(false);
   const [certForSimulados, setCertForSimulados] = useState<Certification | null>(null);
 
+  const [currentUser, setCurrentUser] = useState<User | null>(auth.currentUser);
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+
   // Gemini AI, Notebook & MCP Modals states
   const [isGeminiChatModalOpen, setIsGeminiChatModalOpen] = useState(false);
   const [isNotebookModalOpen, setIsNotebookModalOpen] = useState(false);
@@ -84,6 +87,29 @@ export default function App() {
   const [selectedCertIdForFocus, setSelectedCertIdForFocus] = useState<string>('');
   const [selectedTrackIdForNotes, setSelectedTrackIdForNotes] = useState<string>('');
   const [selectedSubcategoryIdForNotes, setSelectedSubcategoryIdForNotes] = useState<string>('');
+
+  const handleGoogleLogin = async () => {
+    setIsLoggingIn(true);
+    try {
+      const res = await googleSignIn();
+      if (res?.user) {
+        setCurrentUser(res.user);
+      }
+    } catch (err: any) {
+      console.error('Falha ao entrar com Google:', err);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setCurrentUser(null);
+    } catch (err: any) {
+      console.error('Falha ao sair da conta:', err);
+    }
+  };
 
   // Update Notebooks in database & persistent storage
   const handleUpdateNotebooks = (updatedBooks: NotebookBook[]) => {
@@ -129,6 +155,7 @@ export default function App() {
   // Sync user profile & data when user signs in
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
+      setCurrentUser(user);
       if (user) {
         try {
           const idToken = await user.getIdToken();
@@ -139,19 +166,66 @@ export default function App() {
               Authorization: `Bearer ${idToken}`,
             },
           });
-          // Bulk sync current database to Cloud SQL PostgreSQL
-          await fetch('/api/cloudsql/sync-all', {
-            method: 'POST',
+
+          // Check if Cloud SQL already has saved certifications or notes for this user
+          const pullRes = await fetch('/api/cloudsql/pull-all', {
             headers: {
-              'Content-Type': 'application/json',
               Authorization: `Bearer ${idToken}`,
             },
-            body: JSON.stringify({
-              certifications: database.certifications,
-              notes: database.notes,
-              studySessions: database.studySessions,
-            }),
           });
+
+          if (pullRes.ok) {
+            const remoteData = await pullRes.json();
+            const remoteCerts = remoteData.certifications || [];
+            const remoteNotes = remoteData.notes || [];
+
+            if (remoteCerts.length > 0 || remoteNotes.length > 0) {
+              // Remote records exist: merge/enrich local database with remote updates
+              setDatabase((prev) => {
+                const mergedCerts = [...prev.certifications];
+                remoteCerts.forEach((rc: any) => {
+                  const idx = mergedCerts.findIndex((c) => c.id === rc.id);
+                  if (idx >= 0) {
+                    mergedCerts[idx] = { ...mergedCerts[idx], ...rc };
+                  } else {
+                    mergedCerts.push(rc);
+                  }
+                });
+
+                const mergedNotes = [...prev.notes];
+                remoteNotes.forEach((rn: any) => {
+                  const idx = mergedNotes.findIndex((n) => n.id === rn.id);
+                  if (idx >= 0) {
+                    mergedNotes[idx] = { ...mergedNotes[idx], ...rn };
+                  } else {
+                    mergedNotes.push(rn);
+                  }
+                });
+
+                const nextDb: AppDatabase = {
+                  ...prev,
+                  certifications: mergedCerts,
+                  notes: mergedNotes,
+                };
+                saveDatabase(nextDb);
+                return nextDb;
+              });
+            } else {
+              // No remote records yet: seed Cloud SQL with initial local data
+              await fetch('/api/cloudsql/sync-all', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                  certifications: database.certifications,
+                  notes: database.notes,
+                  studySessions: database.studySessions,
+                }),
+              });
+            }
+          }
         } catch {
           // Gracefully continue with client-side state
         }
@@ -748,6 +822,10 @@ export default function App() {
             setActiveTab('tracks');
             setSelectedTrack(null);
           }}
+          user={currentUser}
+          onLogin={handleGoogleLogin}
+          onLogout={handleLogout}
+          isLoggingIn={isLoggingIn}
         />
 
         {/* Dynamic Dedicated Tools & Integrations Menu Bar */}

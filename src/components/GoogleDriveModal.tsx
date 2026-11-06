@@ -23,7 +23,7 @@ import {
   deleteDriveFile,
   DriveFile
 } from '../utils/googleDrive';
-import { googleSignIn, logout, auth } from '../lib/firebase';
+import { googleWorkspaceSignIn, logout, auth } from '../lib/firebase';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { Certification } from '../types';
 import { AppDatabase } from '../utils/storage';
@@ -86,7 +86,7 @@ export const GoogleDriveModal: React.FC<GoogleDriveModalProps> = ({
     setLoading(true);
     setStatusMessage(null);
     try {
-      const result = await googleSignIn();
+      const result = await googleWorkspaceSignIn();
       if (result) {
         setCurrentUser(result.user);
         setStatusMessage({ type: 'success', text: `Conectado como ${result.user.email}` });
