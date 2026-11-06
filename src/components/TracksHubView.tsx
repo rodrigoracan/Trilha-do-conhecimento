@@ -77,240 +77,42 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
     }
   };
 
-  // Color theme styles with respective soft pastel backgrounds and crisp contour lines
-  const getThemeStyles = (color?: string) => {
+  // Unified color theme styles based on the preferred layout and styling of "Certificações de TI"
+  const getThemeStyles = (_color?: string) => {
     if (isLight) {
-      switch (color) {
-        case 'sky':
-          return {
-            border: 'border-2 border-[#38bdf8] hover:border-sky-500 shadow-md shadow-sky-900/10 hover:shadow-xl',
-            cardBg: 'bg-[#dce9f8]',
-            badgeBg: 'bg-white/95 text-sky-950 border border-sky-300 font-bold shadow-2xs',
-            iconBox: 'bg-white border border-sky-300 text-sky-700 shadow-xs',
-            frameMark: 'bg-gradient-to-r from-sky-500 via-sky-400 to-blue-600',
-            titleColor: 'text-slate-900 group-hover:text-sky-800',
-            subtitleColor: 'text-sky-900 font-bold',
-            descColor: 'text-slate-700',
-            tagBg: 'bg-white/90 border-sky-300 text-slate-800 font-semibold',
-            metaBox: 'bg-white/90 border border-sky-300 text-slate-800',
-            progressBg: 'bg-sky-500',
-            progressTrack: 'bg-sky-200/90',
-            btnClass: 'btn-3d-primary',
-          };
-        case 'purple':
-          return {
-            border: 'border-2 border-[#c084fc] hover:border-purple-500 shadow-md shadow-purple-900/10 hover:shadow-xl',
-            cardBg: 'bg-[#e2eaf8]',
-            badgeBg: 'bg-white/95 text-purple-950 border border-purple-300 font-bold shadow-2xs',
-            iconBox: 'bg-white border border-purple-300 text-purple-700 shadow-xs',
-            frameMark: 'bg-gradient-to-r from-purple-500 via-purple-400 to-indigo-600',
-            titleColor: 'text-slate-900 group-hover:text-purple-800',
-            subtitleColor: 'text-purple-900 font-bold',
-            descColor: 'text-slate-700',
-            tagBg: 'bg-white/90 border-purple-300 text-slate-800 font-semibold',
-            metaBox: 'bg-white/90 border border-purple-300 text-slate-800',
-            progressBg: 'bg-purple-500',
-            progressTrack: 'bg-purple-200/90',
-            btnClass: 'btn-3d-purple',
-          };
-        case 'rose':
-          return {
-            border: 'border-2 border-[#fb7185] hover:border-rose-500 shadow-md shadow-rose-900/10 hover:shadow-xl',
-            cardBg: 'bg-[#e5ecf9]',
-            badgeBg: 'bg-white/95 text-rose-950 border border-rose-300 font-bold shadow-2xs',
-            iconBox: 'bg-white border border-rose-300 text-rose-700 shadow-xs',
-            frameMark: 'bg-gradient-to-r from-rose-500 via-rose-400 to-red-600',
-            titleColor: 'text-slate-900 group-hover:text-rose-800',
-            subtitleColor: 'text-rose-900 font-bold',
-            descColor: 'text-slate-700',
-            tagBg: 'bg-white/90 border-rose-300 text-slate-800 font-semibold',
-            metaBox: 'bg-white/90 border border-rose-300 text-slate-800',
-            progressBg: 'bg-rose-500',
-            progressTrack: 'bg-rose-200/90',
-            btnClass: 'btn-3d-danger',
-          };
-        case 'emerald':
-          return {
-            border: 'border-2 border-[#34d399] hover:border-emerald-500 shadow-md shadow-emerald-900/10 hover:shadow-xl',
-            cardBg: 'bg-[#ddeaf8]',
-            badgeBg: 'bg-white/95 text-emerald-950 border border-emerald-300 font-bold shadow-2xs',
-            iconBox: 'bg-white border border-emerald-300 text-emerald-700 shadow-xs',
-            frameMark: 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-600',
-            titleColor: 'text-slate-900 group-hover:text-emerald-800',
-            subtitleColor: 'text-emerald-900 font-bold',
-            descColor: 'text-slate-700',
-            tagBg: 'bg-white/90 border-emerald-300 text-slate-800 font-semibold',
-            metaBox: 'bg-white/90 border border-emerald-300 text-slate-800',
-            progressBg: 'bg-emerald-500',
-            progressTrack: 'bg-emerald-200/90',
-            btnClass: 'btn-3d-emerald',
-          };
-        case 'amber':
-          return {
-            border: 'border-2 border-[#fbbf24] hover:border-amber-500 shadow-md shadow-amber-900/10 hover:shadow-xl',
-            cardBg: 'bg-[#dfebf8]',
-            badgeBg: 'bg-white/95 text-amber-950 border border-amber-300 font-bold shadow-2xs',
-            iconBox: 'bg-white border border-amber-300 text-amber-700 shadow-xs',
-            frameMark: 'bg-gradient-to-r from-amber-500 via-amber-400 to-orange-600',
-            titleColor: 'text-slate-900 group-hover:text-amber-800',
-            subtitleColor: 'text-amber-900 font-bold',
-            descColor: 'text-slate-700',
-            tagBg: 'bg-white/90 border-amber-300 text-slate-800 font-semibold',
-            metaBox: 'bg-white/90 border border-amber-300 text-slate-800',
-            progressBg: 'bg-amber-500',
-            progressTrack: 'bg-amber-200/90',
-            btnClass: 'btn-3d-amber',
-          };
-        case 'teal':
-          return {
-            border: 'border-2 border-[#2dd4bf] hover:border-teal-500 shadow-md shadow-teal-900/10 hover:shadow-xl',
-            cardBg: 'bg-[#dbe9f8]',
-            badgeBg: 'bg-white/95 text-teal-950 border border-teal-300 font-bold shadow-2xs',
-            iconBox: 'bg-white border border-teal-300 text-teal-700 shadow-xs',
-            frameMark: 'bg-gradient-to-r from-teal-500 via-teal-400 to-cyan-600',
-            titleColor: 'text-slate-900 group-hover:text-teal-800',
-            subtitleColor: 'text-teal-900 font-bold',
-            descColor: 'text-slate-700',
-            tagBg: 'bg-white/90 border-teal-300 text-slate-800 font-semibold',
-            metaBox: 'bg-white/90 border border-teal-300 text-slate-800',
-            progressBg: 'bg-teal-500',
-            progressTrack: 'bg-teal-200/90',
-            btnClass: 'btn-3d-teal',
-          };
-        default:
-          return {
-            border: 'border-2 border-[#60a5fa] hover:border-blue-500 shadow-md shadow-blue-900/10 hover:shadow-xl',
-            cardBg: 'bg-[#dce9f8]',
-            badgeBg: 'bg-white/95 text-blue-950 border border-blue-300 font-bold shadow-2xs',
-            iconBox: 'bg-white border border-blue-300 text-blue-700 shadow-xs',
-            frameMark: 'bg-gradient-to-r from-blue-500 via-sky-400 to-blue-600',
-            titleColor: 'text-slate-900 group-hover:text-blue-800',
-            subtitleColor: 'text-blue-900 font-bold',
-            descColor: 'text-slate-700',
-            tagBg: 'bg-white/90 border-blue-300 text-slate-800 font-semibold',
-            metaBox: 'bg-white/90 border border-blue-300 text-slate-800',
-            progressBg: 'bg-blue-500',
-            progressTrack: 'bg-blue-200/90',
-            btnClass: 'btn-3d-primary',
-          };
-      }
+      return {
+        border: 'border-2 border-[#38bdf8] hover:border-sky-500 shadow-md shadow-sky-900/10 hover:shadow-xl',
+        cardBg: 'bg-[#dce9f8]',
+        badgeBg: 'bg-white/95 text-sky-950 border border-sky-300 font-bold shadow-2xs',
+        iconBox: 'bg-white border border-sky-300 text-sky-700 shadow-xs',
+        frameMark: 'bg-gradient-to-r from-sky-500 via-sky-400 to-blue-600',
+        titleColor: 'text-slate-900 group-hover:text-sky-800',
+        subtitleColor: 'text-sky-900 font-bold',
+        descColor: 'text-slate-700',
+        tagBg: 'bg-white/90 border-sky-300 text-slate-800 font-semibold',
+        metaBox: 'bg-white/90 border border-sky-300 text-slate-800',
+        progressBg: 'bg-sky-500',
+        progressTrack: 'bg-sky-200/90',
+        btnClass: 'btn-3d-primary',
+      };
     }
 
-    // Dark Mode Theme - Elevated surfaces and glowing crisp borders against the lighter royal blue canvas
-    switch (color) {
-      case 'sky':
-        return {
-          border: 'border-2 border-sky-400/80 hover:border-sky-300 shadow-xl shadow-black/40',
-          cardBg: 'bg-gradient-to-br from-[#10223f] via-[#14284b] to-[#0c1c36]',
-          badgeBg: 'bg-sky-500/20 text-sky-300 border border-sky-400/40',
-          iconBox: 'bg-[#08152c] border border-sky-500/40 text-sky-400 shadow-sm',
-          frameMark: 'bg-sky-400',
-          titleColor: 'text-white group-hover:text-sky-300',
-          subtitleColor: 'text-slate-200 font-medium',
-          descColor: 'text-slate-300',
-          tagBg: 'bg-[#09162e] border border-slate-700/80 text-slate-200',
-          metaBox: 'bg-[#08152b]/95 border border-slate-700/80 text-slate-200',
-          progressBg: 'bg-sky-500',
-          progressTrack: 'bg-[#08152b]',
-          btnClass: 'btn-3d-primary',
-        };
-      case 'purple':
-        return {
-          border: 'border-2 border-purple-400/80 hover:border-purple-300 shadow-xl shadow-black/40',
-          cardBg: 'bg-gradient-to-br from-[#19153a] via-[#1f1947] to-[#120f2b]',
-          badgeBg: 'bg-purple-500/20 text-purple-300 border border-purple-400/40',
-          iconBox: 'bg-[#140a28] border border-purple-500/40 text-purple-400 shadow-sm',
-          frameMark: 'bg-purple-400',
-          titleColor: 'text-white group-hover:text-purple-300',
-          subtitleColor: 'text-slate-200 font-medium',
-          descColor: 'text-slate-300',
-          tagBg: 'bg-[#150a2b] border border-slate-700/80 text-slate-200',
-          metaBox: 'bg-[#120824]/95 border border-slate-700/80 text-slate-200',
-          progressBg: 'bg-purple-500',
-          progressTrack: 'bg-[#100720]',
-          btnClass: 'btn-3d-purple',
-        };
-      case 'rose':
-        return {
-          border: 'border-2 border-rose-400/80 hover:border-rose-300 shadow-xl shadow-black/40',
-          cardBg: 'bg-gradient-to-br from-[#24132b] via-[#301639] to-[#180b1d]',
-          badgeBg: 'bg-rose-500/20 text-rose-300 border border-rose-400/40',
-          iconBox: 'bg-[#1f0914] border border-rose-500/40 text-rose-400 shadow-sm',
-          frameMark: 'bg-rose-400',
-          titleColor: 'text-white group-hover:text-rose-300',
-          subtitleColor: 'text-slate-200 font-medium',
-          descColor: 'text-slate-300',
-          tagBg: 'bg-[#200915] border border-slate-700/80 text-slate-200',
-          metaBox: 'bg-[#1a0711]/95 border border-slate-700/80 text-slate-200',
-          progressBg: 'bg-rose-500',
-          progressTrack: 'bg-[#14050d]',
-          btnClass: 'btn-3d-danger',
-        };
-      case 'emerald':
-        return {
-          border: 'border-2 border-emerald-400/80 hover:border-emerald-300 shadow-xl shadow-black/40',
-          cardBg: 'bg-gradient-to-br from-[#0e242d] via-[#12313d] to-[#091a20]',
-          badgeBg: 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40',
-          iconBox: 'bg-[#061c13] border border-emerald-500/40 text-emerald-400 shadow-sm',
-          frameMark: 'bg-emerald-400',
-          titleColor: 'text-white group-hover:text-emerald-300',
-          subtitleColor: 'text-slate-200 font-medium',
-          descColor: 'text-slate-300',
-          tagBg: 'bg-[#091b14] border border-slate-700/80 text-slate-200',
-          metaBox: 'bg-[#071711]/95 border border-slate-700/80 text-slate-200',
-          progressBg: 'bg-emerald-500',
-          progressTrack: 'bg-[#05140e]',
-          btnClass: 'btn-3d-emerald',
-        };
-      case 'amber':
-        return {
-          border: 'border-2 border-amber-400/80 hover:border-amber-300 shadow-xl shadow-black/40',
-          cardBg: 'bg-gradient-to-br from-[#261d1e] via-[#352723] to-[#1a1314]',
-          badgeBg: 'bg-amber-500/20 text-amber-300 border border-amber-400/40',
-          iconBox: 'bg-[#21160a] border border-amber-500/40 text-amber-400 shadow-sm',
-          frameMark: 'bg-amber-400',
-          titleColor: 'text-white group-hover:text-amber-300',
-          subtitleColor: 'text-slate-200 font-medium',
-          descColor: 'text-slate-300',
-          tagBg: 'bg-[#201509] border border-slate-700/80 text-slate-200',
-          metaBox: 'bg-[#191007]/95 border border-slate-700/80 text-slate-200',
-          progressBg: 'bg-amber-500',
-          progressTrack: 'bg-[#140c05]',
-          btnClass: 'btn-3d-amber',
-        };
-      case 'teal':
-        return {
-          border: 'border-2 border-teal-400/80 hover:border-teal-300 shadow-xl shadow-black/40',
-          cardBg: 'bg-gradient-to-br from-[#0c2438] via-[#10304a] to-[#081a29]',
-          badgeBg: 'bg-teal-500/20 text-teal-300 border border-teal-400/40',
-          iconBox: 'bg-[#061c1e] border border-teal-500/40 text-teal-400 shadow-sm',
-          frameMark: 'bg-teal-400',
-          titleColor: 'text-white group-hover:text-teal-300',
-          subtitleColor: 'text-slate-200 font-medium',
-          descColor: 'text-slate-300',
-          tagBg: 'bg-[#091a1c] border border-slate-700/80 text-slate-200',
-          metaBox: 'bg-[#071618]/95 border border-slate-700/80 text-slate-200',
-          progressBg: 'bg-teal-500',
-          progressTrack: 'bg-[#051214]',
-          btnClass: 'btn-3d-teal',
-        };
-      default:
-        return {
-          border: 'border-2 border-blue-400/80 hover:border-blue-300 shadow-xl shadow-black/40',
-          cardBg: 'bg-gradient-to-br from-[#10223f] via-[#14284b] to-[#0c1c36]',
-          badgeBg: 'bg-blue-500/20 text-blue-300 border border-blue-400/40',
-          iconBox: 'bg-[#08152c] border border-blue-500/40 text-blue-400 shadow-sm',
-          frameMark: 'bg-blue-400',
-          titleColor: 'text-white group-hover:text-blue-300',
-          subtitleColor: 'text-slate-200 font-medium',
-          descColor: 'text-slate-300',
-          tagBg: 'bg-[#09162e] border border-slate-700/80 text-slate-200',
-          metaBox: 'bg-[#08152b]/95 border border-slate-700/80 text-slate-200',
-          progressBg: 'bg-blue-500',
-          progressTrack: 'bg-[#08152b]',
-          btnClass: 'btn-3d-primary',
-        };
-    }
+    // Dark Mode Theme - Elevated royal blue surfaces identical to the preferred "Certificações de TI" block
+    return {
+      border: 'border-2 border-sky-400/80 hover:border-sky-300 shadow-xl shadow-black/40',
+      cardBg: 'bg-gradient-to-br from-[#10223f] via-[#14284b] to-[#0c1c36]',
+      badgeBg: 'bg-sky-500/20 text-sky-300 border border-sky-400/40',
+      iconBox: 'bg-[#08152c] border border-sky-500/40 text-sky-400 shadow-sm',
+      frameMark: 'bg-sky-400',
+      titleColor: 'text-white group-hover:text-sky-300',
+      subtitleColor: 'text-slate-200 font-medium',
+      descColor: 'text-slate-300',
+      tagBg: 'bg-[#09162e] border border-slate-700/80 text-slate-200',
+      metaBox: 'bg-[#08152b]/95 border border-slate-700/80 text-slate-200',
+      progressBg: 'bg-sky-500',
+      progressTrack: 'bg-[#08152b]',
+      btnClass: 'btn-3d-primary',
+    };
   };
 
 

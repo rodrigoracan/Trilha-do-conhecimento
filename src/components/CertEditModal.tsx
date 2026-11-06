@@ -35,6 +35,7 @@ export const CertEditModal: React.FC<CertEditModalProps> = ({
   const [targetGate, setTargetGate] = useState('Gate 1');
   const [targetMonths, setTargetMonths] = useState('Meses 1 a 4');
   const [estimatedHours, setEstimatedHours] = useState(60);
+  const [hoursSpent, setHoursSpent] = useState(0);
   const [officialUrl, setOfficialUrl] = useState('');
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [modulesList, setModulesList] = useState<{ id: string; title: string; completed: boolean }[]>([]);
@@ -51,6 +52,7 @@ export const CertEditModal: React.FC<CertEditModalProps> = ({
       setTargetGate(certToEdit.targetGate);
       setTargetMonths(certToEdit.targetMonths);
       setEstimatedHours(certToEdit.estimatedHours);
+      setHoursSpent(certToEdit.hoursSpent || 0);
       setOfficialUrl(certToEdit.officialUrl || '');
       setModulesList(
         certToEdit.modules.map((m) => ({ id: m.id, title: m.title, completed: m.completed }))
@@ -66,6 +68,7 @@ export const CertEditModal: React.FC<CertEditModalProps> = ({
       setTargetGate('Gate 1');
       setTargetMonths('Meses 1 a 4');
       setEstimatedHours(60);
+      setHoursSpent(0);
       setOfficialUrl('');
       setModulesList([
         { id: `mod-1`, title: 'Fundamentos e Requisitos Normativos', completed: false },
@@ -103,7 +106,8 @@ export const CertEditModal: React.FC<CertEditModalProps> = ({
       status,
       targetGate,
       targetMonths,
-      estimatedHours: Number(estimatedHours) || 40,
+      estimatedHours: Math.max(1, Number(estimatedHours) || 40),
+      hoursSpent: Math.max(0, Number(hoursSpent) || 0),
       officialUrl: officialUrl.trim() || undefined,
       modules: modulesList.map((m) => ({
         id: m.id,
@@ -206,7 +210,7 @@ export const CertEditModal: React.FC<CertEditModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             <div>
               <label className="block text-slate-400 mb-1">Status:</label>
               <select
@@ -220,7 +224,7 @@ export const CertEditModal: React.FC<CertEditModalProps> = ({
               </select>
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Fase:</label>
+              <label className="block text-slate-400 mb-1">Fase / Gate:</label>
               <input
                 type="text"
                 value={targetGate}
@@ -230,13 +234,24 @@ export const CertEditModal: React.FC<CertEditModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Horas:</label>
+              <label className="block text-slate-400 mb-1">Horas Totais:</label>
               <input
                 type="number"
                 min={1}
                 value={estimatedHours}
                 onChange={(e) => setEstimatedHours(Number(e.target.value))}
-                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-200 focus:outline-none"
+                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-200 focus:outline-none font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-400 mb-1">Já Estudadas:</label>
+              <input
+                type="number"
+                min={0}
+                step={0.5}
+                value={hoursSpent}
+                onChange={(e) => setHoursSpent(Number(e.target.value))}
+                className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded text-slate-200 focus:outline-none font-mono"
               />
             </div>
           </div>

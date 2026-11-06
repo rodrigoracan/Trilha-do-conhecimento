@@ -6,7 +6,9 @@ import {
   TrackResource,
   TrackItemChecklist,
   TrackAttachment,
-  StudySession
+  StudySession,
+  StudyNote,
+  CertStatus
 } from '../types';
 import {
   ArrowLeft,
@@ -34,7 +36,14 @@ import {
   Calendar,
   BookOpen,
   BarChart3,
-  TrendingUp
+  TrendingUp,
+  MoreVertical,
+  Clock,
+  Circle,
+  FolderOpen,
+  LayoutGrid,
+  List,
+  MessageSquare
 } from 'lucide-react';
 import { VideoPlayerModal } from './VideoPlayerModal';
 import { SubcategoryModal } from './SubcategoryModal';
@@ -56,6 +65,10 @@ interface TrackDetailViewProps {
   theme?: 'light' | 'dark';
   studySessions?: StudySession[];
   onLogStudyHours?: (hours: number, trackTitle: string) => void;
+  notes?: StudyNote[];
+  onSaveNote?: (note: StudyNote) => void;
+  onDeleteNote?: (id: string) => void;
+  onOpenNotesForModule?: (trackId: string, subcategoryId?: string) => void;
 }
 
 export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
@@ -68,11 +81,34 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
   theme = 'light',
   studySessions = [],
   onLogStudyHours,
+  notes = [],
+  onSaveNote,
+  onDeleteNote,
+  onOpenNotesForModule,
 }) => {
   const isLight = theme === 'light';
   const [viewMode, setViewMode] = useState<'modules' | 'schedule' | 'dashboard'>('modules');
+  const [modulesLayout, setModulesLayout] = useState<'blocks' | 'list'>('blocks');
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedSubcategories, setCollapsedSubcategories] = useState<Record<string, boolean>>({});
+  const [expandedGridTopics, setExpandedGridTopics] = useState<Record<string, boolean>>({});
+  const [expandedGridNotes, setExpandedGridNotes] = useState<Record<string, boolean>>({});
+  const [openDropdownSubId, setOpenDropdownSubId] = useState<string | null>(null);
+
+  // Quick Hours & Workload Modal state
+  const [quickHoursModalSub, setQuickHoursModalSub] = useState<TrackSubcategory | null>(null);
+  const [quickHoursEst, setQuickHoursEst] = useState<number>(40);
+  const [quickHoursSpent, setQuickHoursSpent] = useState<number>(0);
+  const [quickHoursPercent, setQuickHoursPercent] = useState<number>(0);
+  const [quickHoursStatus, setQuickHoursStatus] = useState<CertStatus>('Planejada');
+
+  // Quick Note with Percentage Abatement Modal state
+  const [quickNoteModalSub, setQuickNoteModalSub] = useState<TrackSubcategory | null>(null);
+  const [quickNoteTitle, setQuickNoteTitle] = useState('');
+  const [quickNoteContent, setQuickNoteContent] = useState('');
+  const [quickNoteHours, setQuickNoteHours] = useState<number | ''>('');
+  const [quickNotePercent, setQuickNotePercent] = useState<number | ''>('');
+  const [quickNoteAutoPercent, setQuickNoteAutoPercent] = useState(true);
 
   // Modals state
   const [isSubcategoryModalOpen, setIsSubcategoryModalOpen] = useState(false);
@@ -100,6 +136,25 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
   // Editing note in-place state
   const [editingNoteItemId, setEditingNoteItemId] = useState<string | null>(null);
   const [tempNoteContent, setTempNoteContent] = useState<string>('');
+
+  // Open Quick Hours Modal for a module
+  const openQuickHoursModal = (sub: TrackSubcategory) => {
+    setQuickHoursModalSub(sub);
+    setQuickHoursEst(sub.estimatedHours || 40);
+    setQuickHoursSpent(sub.hoursSpent || 0);
+    setQuickHoursPercent(sub.completedPercent || 0);
+    setQuickHoursStatus(sub.status || 'Planejada');
+  };
+
+  // Open Quick Note Modal for a module
+  const openQuickNoteModal = (sub: TrackSubcategory) => {
+    setQuickNoteModalSub(sub);
+    setQuickNoteTitle(`Anotação: ${sub.title}`);
+    setQuickNoteContent('');
+    setQuickNoteHours(2);
+    const est = sub.estimatedHours || 40;
+    setQuickNotePercent(Math.min(100, Math.round((2 / est) * 100)));
+  };
 
   // Toggle collapse for subcategory (module)
   const toggleCollapse = (subId: string) => {
@@ -420,15 +475,24 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
     });
   };
 
+  // Filter notes linked to this track
+  const trackNotes = notes.filter(
+    (n) => n.trackId === track.id || (n.trackTitle && n.trackTitle.toLowerCase() === track.title.toLowerCase())
+  );
+
   // --- STATS CALCULATION ---
   let totalItemsCount = 0;
   let completedItemsCount = 0;
   let inProgressCount = 0;
   let resourcesCount = 0;
   let totalAttachmentsCount = 0;
+  let totalTrackHoursSpent = 0;
+  let totalTrackHoursEstimated = 0;
 
   track.subcategories?.forEach((sub) => {
     totalAttachmentsCount += sub.attachments?.length || 0;
+    totalTrackHoursSpent += sub.hoursSpent || 0;
+    totalTrackHoursEstimated += sub.estimatedHours || 40;
     sub.items?.forEach((item) => {
       totalItemsCount += 1;
       if (item.status === 'Concluído') completedItemsCount += 1;
@@ -437,8 +501,19 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
     });
   });
 
-  const progressPercentage =
-    totalItemsCount > 0 ? Math.round((completedItemsCount / totalItemsCount) * 100) : 0;
+  const subsCount = track.subcategories?.length || 0;
+  const progressPercentage = subsCount > 0
+    ? Math.round(
+        track.subcategories.reduce((acc, sub) => {
+          if (sub.completedPercent !== undefined && sub.completedPercent !== null) {
+            return acc + sub.completedPercent;
+          }
+          const subTotal = sub.items?.length || 0;
+          const subDone = sub.items?.filter((i) => i.status === 'Concluído').length || 0;
+          return acc + (subTotal > 0 ? Math.round((subDone / subTotal) * 100) : 0);
+        }, 0) / subsCount
+      )
+    : 0;
 
   // Format file size helper
   const formatFileSize = (bytes: number) => {
@@ -447,6 +522,84 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  // Quick Hours save handler
+  const handleSaveQuickHours = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickHoursModalSub) return;
+    const est = Math.max(1, Number(quickHoursEst) || 1);
+    const spent = Math.max(0, Number(quickHoursSpent) || 0);
+    const pct = Math.min(100, Math.max(0, Number(quickHoursPercent) || 0));
+    const nextStatus: CertStatus =
+      pct >= 100
+        ? 'Concluída'
+        : spent > 0 || pct > 0
+        ? 'Em Andamento'
+        : quickHoursStatus;
+
+    const updatedSubs = (track.subcategories || []).map((s) =>
+      s.id === quickHoursModalSub.id
+        ? {
+            ...s,
+            estimatedHours: est,
+            hoursSpent: spent,
+            completedPercent: pct,
+            status: nextStatus,
+          }
+        : s
+    );
+    onUpdateTrack({
+      ...track,
+      subcategories: updatedSubs,
+      updatedAt: new Date().toISOString(),
+    });
+    setQuickHoursModalSub(null);
+  };
+
+  // Module status toggle/change
+  const handleModuleStatusChange = (sub: TrackSubcategory, newStatus: CertStatus) => {
+    let nextPercent = sub.completedPercent || 0;
+    if (newStatus === 'Concluída' && nextPercent < 100) nextPercent = 100;
+    if (newStatus === 'Planejada' && nextPercent > 0) nextPercent = 0;
+    if (newStatus === 'Em Andamento' && nextPercent === 0) nextPercent = 10;
+
+    const updatedSubs = (track.subcategories || []).map((s) =>
+      s.id === sub.id ? { ...s, status: newStatus, completedPercent: nextPercent } : s
+    );
+    onUpdateTrack({
+      ...track,
+      subcategories: updatedSubs,
+      updatedAt: new Date().toISOString(),
+    });
+  };
+
+  // Quick Note save handler with percentage abatement
+  const handleSaveQuickNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickNoteModalSub || !onSaveNote) return;
+    const hoursNum = typeof quickNoteHours === 'number' ? quickNoteHours : Number(quickNoteHours) || 0;
+    let pctNum = typeof quickNotePercent === 'number' ? quickNotePercent : Number(quickNotePercent) || 0;
+    if (pctNum === 0 && hoursNum > 0 && quickNoteModalSub.estimatedHours) {
+      pctNum = Math.min(100, Math.round((hoursNum / quickNoteModalSub.estimatedHours) * 100));
+    }
+
+    const newNote: StudyNote = {
+      id: `note-${Date.now()}`,
+      title: quickNoteTitle.trim() || `Anotação de Estudo - ${quickNoteModalSub.title}`,
+      content: quickNoteContent.trim(),
+      trackId: track.id,
+      trackTitle: track.title,
+      subcategoryId: quickNoteModalSub.id,
+      subcategoryTitle: quickNoteModalSub.title,
+      studyHours: hoursNum > 0 ? hoursNum : undefined,
+      studyPercent: pctNum > 0 ? pctNum : undefined,
+      tags: [track.category, 'Módulo', quickNoteModalSub.title.slice(0, 16)],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    onSaveNote(newNote);
+    setQuickNoteModalSub(null);
   };
 
   // Color mapper for frame markings and respective soft pastel background
@@ -508,6 +661,131 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
       }
     }
     return 'bg-gradient-to-r from-[#0c1830] via-[#0f2142] to-[#0c1830] border-2 border-blue-400/60 shadow-xl shadow-black/40';
+  };
+
+  // Card theme helper matching CertificationsView layout
+  const getCardThemeStyles = (colorKey?: string) => {
+    const key = colorKey || track.colorTheme || 'sky';
+    if (isLight) {
+      switch (key) {
+        case 'emerald':
+          return {
+            cardBg: 'bg-[#eefdf4] border-2 border-emerald-400 shadow-md shadow-emerald-900/5',
+            titleColor: 'text-emerald-950',
+            badgeClass: 'bg-white text-emerald-900 border-emerald-300 font-bold',
+            progressBg: 'bg-emerald-500',
+            iconColor: 'text-emerald-600',
+          };
+        case 'purple':
+          return {
+            cardBg: 'bg-[#f8f3ff] border-2 border-purple-400 shadow-md shadow-purple-900/5',
+            titleColor: 'text-purple-950',
+            badgeClass: 'bg-white text-purple-900 border-purple-300 font-bold',
+            progressBg: 'bg-purple-500',
+            iconColor: 'text-purple-600',
+          };
+        case 'amber':
+          return {
+            cardBg: 'bg-[#fffbeb] border-2 border-amber-400 shadow-md shadow-amber-900/5',
+            titleColor: 'text-amber-950',
+            badgeClass: 'bg-white text-amber-900 border-amber-300 font-bold',
+            progressBg: 'bg-amber-500',
+            iconColor: 'text-amber-600',
+          };
+        case 'rose':
+          return {
+            cardBg: 'bg-[#fff1f4] border-2 border-rose-400 shadow-md shadow-rose-900/5',
+            titleColor: 'text-rose-950',
+            badgeClass: 'bg-white text-rose-900 border-rose-300 font-bold',
+            progressBg: 'bg-rose-500',
+            iconColor: 'text-rose-600',
+          };
+        case 'teal':
+          return {
+            cardBg: 'bg-[#effcf9] border-2 border-teal-400 shadow-md shadow-teal-900/5',
+            titleColor: 'text-teal-950',
+            badgeClass: 'bg-white text-teal-900 border-teal-300 font-bold',
+            progressBg: 'bg-teal-500',
+            iconColor: 'text-teal-600',
+          };
+        case 'indigo':
+          return {
+            cardBg: 'bg-[#eef2ff] border-2 border-indigo-400 shadow-md shadow-indigo-900/5',
+            titleColor: 'text-indigo-950',
+            badgeClass: 'bg-white text-indigo-900 border-indigo-300 font-bold',
+            progressBg: 'bg-indigo-500',
+            iconColor: 'text-indigo-600',
+          };
+        default:
+          return {
+            cardBg: 'bg-[#edf6ff] border-2 border-sky-400 shadow-md shadow-sky-900/5',
+            titleColor: 'text-sky-950',
+            badgeClass: 'bg-white text-sky-900 border-sky-300 font-bold',
+            progressBg: 'bg-sky-500',
+            iconColor: 'text-sky-600',
+          };
+      }
+    }
+
+    // Dark Mode Theme (royal blue cards, elevated with vibrant borders)
+    switch (key) {
+      case 'emerald':
+        return {
+          cardBg: 'card-3d-base card-3d-emerald',
+          titleColor: 'text-emerald-300',
+          badgeClass: 'bg-emerald-950/90 text-emerald-300 border-emerald-500/50',
+          progressBg: 'bg-emerald-500',
+          iconColor: 'text-emerald-400',
+        };
+      case 'purple':
+        return {
+          cardBg: 'card-3d-base card-3d-purple',
+          titleColor: 'text-purple-300',
+          badgeClass: 'bg-purple-950/90 text-purple-300 border-purple-500/50',
+          progressBg: 'bg-purple-500',
+          iconColor: 'text-purple-400',
+        };
+      case 'amber':
+        return {
+          cardBg: 'card-3d-base card-3d-amber',
+          titleColor: 'text-amber-300',
+          badgeClass: 'bg-amber-950/90 text-amber-300 border-amber-500/50',
+          progressBg: 'bg-amber-500',
+          iconColor: 'text-amber-400',
+        };
+      case 'rose':
+        return {
+          cardBg: 'card-3d-base card-3d-rose',
+          titleColor: 'text-rose-300',
+          badgeClass: 'bg-rose-950/90 text-rose-300 border-rose-500/50',
+          progressBg: 'bg-rose-500',
+          iconColor: 'text-rose-400',
+        };
+      case 'teal':
+        return {
+          cardBg: 'card-3d-base card-3d-teal',
+          titleColor: 'text-teal-300',
+          badgeClass: 'bg-teal-950/90 text-teal-300 border-teal-500/50',
+          progressBg: 'bg-teal-500',
+          iconColor: 'text-teal-400',
+        };
+      case 'indigo':
+        return {
+          cardBg: 'card-3d-base card-3d-indigo',
+          titleColor: 'text-indigo-300',
+          badgeClass: 'bg-indigo-950/90 text-indigo-300 border-indigo-500/50',
+          progressBg: 'bg-indigo-500',
+          iconColor: 'text-indigo-400',
+        };
+      default:
+        return {
+          cardBg: 'card-3d-base card-3d-sky',
+          titleColor: 'text-sky-300',
+          badgeClass: 'bg-sky-950/90 text-sky-300 border-sky-500/50',
+          progressBg: 'bg-sky-500',
+          iconColor: 'text-sky-400',
+        };
+    }
   };
 
   return (
@@ -687,10 +965,18 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
           >
             <div className="px-2 py-1">
               <div className={`text-lg font-bold ${isLight ? 'text-sky-700' : 'text-sky-400'}`}>
-                {track.subcategories?.length || 0}
+                {subsCount}
               </div>
               <div className={`text-[10px] font-sans uppercase font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                 Módulos
+              </div>
+            </div>
+            <div className="px-2 py-1">
+              <div className={`text-lg font-bold ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>
+                {totalTrackHoursSpent}h / {totalTrackHoursEstimated}h
+              </div>
+              <div className={`text-[10px] font-sans uppercase font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                Carga Horária
               </div>
             </div>
             <div className="px-2 py-1">
@@ -698,23 +984,15 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                 {completedItemsCount}/{totalItemsCount}
               </div>
               <div className={`text-[10px] font-sans uppercase font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                Concluídos
-              </div>
-            </div>
-            <div className="px-2 py-1">
-              <div className={`text-lg font-bold ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>
-                {resourcesCount}
-              </div>
-              <div className={`text-[10px] font-sans uppercase font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                Links/Vídeos
+                Tópicos
               </div>
             </div>
             <div className="px-2 py-1">
               <div className={`text-lg font-bold ${isLight ? 'text-purple-700' : 'text-purple-400'}`}>
-                {totalAttachmentsCount}
+                {trackNotes.length}
               </div>
               <div className={`text-[10px] font-sans uppercase font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                Documentos
+                Anotações
               </div>
             </div>
           </div>
@@ -728,7 +1006,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
               Progresso Geral da Trilha
             </span>
             <span className={`font-bold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              {completedItemsCount} de {totalItemsCount} tópicos concluídos ({progressPercentage}%)
+              {progressPercentage}% concluído · {totalTrackHoursSpent}h de {totalTrackHoursEstimated}h ({completedItemsCount} de {totalItemsCount} tópicos)
             </span>
           </div>
           <div className={`w-full h-2.5 rounded-full overflow-hidden shadow-inner ${isLight ? 'bg-slate-200' : 'bg-[#071120]'}`}>
@@ -893,34 +1171,557 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto text-xs">
+        <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto text-xs">
+          {/* Layout switcher: Quadros (Blocos) vs. Lista Detalhada */}
+          <div className={`flex items-center p-0.5 rounded-lg border ${
+            isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-800/80 border-slate-700'
+          }`}>
+            <button
+              type="button"
+              onClick={() => setModulesLayout('blocks')}
+              className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+                modulesLayout === 'blocks'
+                  ? 'bg-sky-600 text-white shadow-xs'
+                  : isLight
+                  ? 'text-slate-700 hover:text-slate-900'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Quadros (Blocos)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setModulesLayout('list')}
+              className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+                modulesLayout === 'list'
+                  ? 'bg-sky-600 text-white shadow-xs'
+                  : isLight
+                  ? 'text-slate-700 hover:text-slate-900'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>Lista Detalhada</span>
+            </button>
+          </div>
+
+          {modulesLayout === 'list' && (
+            <>
+              <button
+                onClick={expandAll}
+                className={`px-3 py-1.5 rounded-lg border font-medium transition cursor-pointer ${
+                  isLight
+                    ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+                    : 'btn-3d-dark text-slate-300 hover:text-white'
+                }`}
+              >
+                Expandir Todos
+              </button>
+              <button
+                onClick={collapseAll}
+                className={`px-3 py-1.5 rounded-lg border font-medium transition cursor-pointer ${
+                  isLight
+                    ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+                    : 'btn-3d-dark text-slate-300 hover:text-white'
+                }`}
+              >
+                Recolher Todos
+              </button>
+            </>
+          )}
+
           <button
-            onClick={expandAll}
-            className={`px-3 py-1.5 rounded-lg border font-medium transition cursor-pointer ${
-              isLight
-                ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
-                : 'btn-3d-dark text-slate-300 hover:text-white'
-            }`}
+            onClick={() => {
+              setSubcategoryToEdit(null);
+              setIsSubcategoryModalOpen(true);
+            }}
+            className="btn-3d-primary px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm"
           >
-            Expandir Todos
-          </button>
-          <button
-            onClick={collapseAll}
-            className={`px-3 py-1.5 rounded-lg border font-medium transition cursor-pointer ${
-              isLight
-                ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
-                : 'btn-3d-dark text-slate-300 hover:text-white'
-            }`}
-          >
-            Recolher Todos
+            <Plus className="w-3.5 h-3.5" />
+            <span>Novo Módulo</span>
           </button>
         </div>
       </div>
 
-      {/* Modules List with Document Attachment Capabilities */}
-      <div className="space-y-5">
-        {track.subcategories?.map((subcategory, index) => {
-          const isCollapsed = !!collapsedSubcategories[subcategory.id];
+      {/* RENDER VIEW: QUADROS (BLOCOS) IDENTICAL TO CERTIFICAÇÕES DE TI */}
+      {modulesLayout === 'blocks' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {track.subcategories?.map((subcategory, index) => {
+            const cardTheme = getCardThemeStyles(subcategory.colorTheme || track.colorTheme);
+            const subTotalItems = subcategory.items?.length || 0;
+            const subCompletedItems = subcategory.items?.filter((i) => i.status === 'Concluído').length || 0;
+            const subHoursSpent = subcategory.hoursSpent || 0;
+            const subEstHours = subcategory.estimatedHours || 40;
+            const subPercent =
+              subcategory.completedPercent !== undefined && subcategory.completedPercent !== null
+                ? subcategory.completedPercent
+                : subTotalItems > 0
+                ? Math.round((subCompletedItems / subTotalItems) * 100)
+                : 0;
+            const attachments = subcategory.attachments || [];
+            const moduleNotes = trackNotes.filter((n) => n.subcategoryId === subcategory.id);
+            const isTopicsExpanded = expandedGridTopics[subcategory.id] ?? true;
+            const isNotesExpanded = expandedGridNotes[subcategory.id] ?? false;
+
+            // Filter items by search query if any
+            const filteredItems = subcategory.items?.filter((item) => {
+              if (!searchQuery) return true;
+              const q = searchQuery.toLowerCase();
+              return (
+                item.title.toLowerCase().includes(q) ||
+                item.description?.toLowerCase().includes(q) ||
+                item.notes?.toLowerCase().includes(q)
+              );
+            }) || [];
+
+            return (
+              <div
+                key={subcategory.id}
+                className={`rounded-2xl ${cardTheme.cardBg} p-5 flex flex-col justify-between select-none transition-all duration-200 hover:-translate-y-1 relative`}
+              >
+                <div>
+                  {/* Header: Module Code Badge, Status Selector & Three-dots Menu */}
+                  <div className="flex items-center justify-between gap-2 text-xs mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-black font-mono px-2.5 py-1 rounded-md border ${cardTheme.badgeClass}`}>
+                        MOD {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <span className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                        Módulo {index + 1}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        value={subcategory.status || 'Planejada'}
+                        onChange={(e) => handleModuleStatusChange(subcategory, e.target.value as CertStatus)}
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded cursor-pointer focus:outline-none border ${
+                          isLight
+                            ? 'bg-white border-slate-300 text-slate-800'
+                            : 'bg-slate-950/90 border-slate-700/60 text-slate-300'
+                        }`}
+                      >
+                        <option value="Planejada">Planejada</option>
+                        <option value="Em Andamento">Em Andamento</option>
+                        <option value="Concluída">Concluída</option>
+                      </select>
+
+                      {/* Three-dots menu for Edit/Delete without textual clutter */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenDropdownSubId(openDropdownSubId === subcategory.id ? null : subcategory.id);
+                          }}
+                          className={`p-1 rounded-md transition cursor-pointer ${
+                            isLight ? 'hover:bg-slate-200/80 text-slate-600' : 'hover:bg-slate-800 text-slate-400 hover:text-white'
+                          }`}
+                          title="Opções do Módulo"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+
+                        {openDropdownSubId === subcategory.id && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className={`absolute right-0 top-full mt-1 w-44 rounded-xl shadow-xl border py-1.5 z-30 animate-fadeIn ${
+                              isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#0d1c34] border-slate-700 text-slate-200'
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenDropdownSubId(null);
+                                setSubcategoryToEdit(subcategory);
+                                setIsSubcategoryModalOpen(true);
+                              }}
+                              className={`w-full px-3 py-1.5 text-xs text-left font-medium flex items-center gap-2 cursor-pointer transition ${
+                                isLight ? 'hover:bg-slate-100' : 'hover:bg-slate-800'
+                              }`}
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-sky-500" />
+                              <span>Editar Módulo</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenDropdownSubId(null);
+                                openQuickHoursModal(subcategory);
+                              }}
+                              className={`w-full px-3 py-1.5 text-xs text-left font-medium flex items-center gap-2 cursor-pointer transition ${
+                                isLight ? 'hover:bg-slate-100' : 'hover:bg-slate-800'
+                              }`}
+                            >
+                              <Clock className="w-3.5 h-3.5 text-amber-500" />
+                              <span>Carga Horária & %</span>
+                            </button>
+
+                            <div className={`my-1 border-t ${isLight ? 'border-slate-100' : 'border-slate-800'}`} />
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenDropdownSubId(null);
+                                handleDeleteSubcategory(subcategory.id, subcategory.title);
+                              }}
+                              className={`w-full px-3 py-1.5 text-xs text-left font-medium flex items-center gap-2 text-rose-500 cursor-pointer transition ${
+                                isLight ? 'hover:bg-rose-50' : 'hover:bg-rose-950/40'
+                              }`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Excluir Módulo</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Title & Description */}
+                  <h3 className={`text-base font-bold ${cardTheme.titleColor} tracking-tight leading-snug`}>
+                    {subcategory.title}
+                  </h3>
+
+                  {subcategory.description && (
+                    <p className={`text-xs mt-1 leading-relaxed line-clamp-2 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                      {subcategory.description}
+                    </p>
+                  )}
+
+                  {/* Progress Bar & Quick Hours / % Adjustment */}
+                  <div className={`mt-4 pt-3 border-t ${isLight ? 'border-slate-200/90' : 'border-slate-800/80'}`}>
+                    <div className={`flex items-center justify-between text-xs mb-1.5 font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+                      <span>
+                        Progresso: <strong className={`font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>{subPercent}%</strong>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => openQuickHoursModal(subcategory)}
+                        className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border transition flex items-center gap-1 cursor-pointer ${
+                          isLight
+                            ? 'bg-white hover:bg-sky-50 text-sky-900 border-sky-300 shadow-2xs hover:border-sky-500'
+                            : 'bg-slate-950/80 hover:bg-slate-900 text-sky-300 border-sky-500/40 hover:border-sky-400'
+                        }`}
+                        title="Clique para ajustar a carga horária total e horas estudadas"
+                      >
+                        <Clock className="w-3 h-3 text-sky-500 shrink-0" />
+                        <span>{subHoursSpent}h / {subEstHours}h</span>
+                        <Edit2 className="w-2.5 h-2.5 text-slate-400 opacity-80" />
+                      </button>
+                    </div>
+                    <div className={`w-full h-2 rounded-full overflow-hidden border shadow-inner ${
+                      isLight ? 'bg-slate-200/90 border-slate-300/60' : 'bg-slate-950/90 border-slate-800/80'
+                    }`}>
+                      <div
+                        className={`h-full ${cardTheme.progressBg} rounded-full transition-all duration-300`}
+                        style={{ width: `${subPercent}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Modules & Topics (Collapsible) */}
+                  <div className={`mt-4 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-slate-800/80'}`}>
+                    <div className="flex items-center justify-between text-xs font-semibold py-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedGridTopics((prev) => ({
+                            ...prev,
+                            [subcategory.id]: !isTopicsExpanded,
+                          }))
+                        }
+                        className={`flex items-center gap-1.5 cursor-pointer transition ${
+                          isLight ? 'text-slate-800 hover:text-sky-800' : 'text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        <BookOpen className={`w-3.5 h-3.5 ${cardTheme.iconColor}`} />
+                        <span>Conteúdos ({subCompletedItems}/{subTotalItems})</span>
+                        {isTopicsExpanded ? (
+                          <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                        ) : (
+                          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveSubcategoryIdForItem(subcategory.id);
+                          setItemToEdit(null);
+                          setIsItemModalOpen(true);
+                        }}
+                        className="text-[11px] text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-0.5 cursor-pointer font-medium"
+                      >
+                        <Plus className="w-3 h-3" /> Tópico
+                      </button>
+                    </div>
+
+                    {isTopicsExpanded && (
+                      <div className="mt-2 space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                        {filteredItems.map((item) => (
+                          <div
+                            key={item.id}
+                            onClick={() => handleToggleItemStatus(item.id)}
+                            className={`p-2 rounded-lg border text-xs cursor-pointer transition flex items-start gap-2 ${
+                              item.status === 'Concluído'
+                                ? isLight
+                                  ? 'bg-slate-100/70 border-slate-200 text-slate-400'
+                                  : 'bg-slate-950/40 border-slate-800/50 text-slate-500'
+                                : isLight
+                                ? 'bg-white/90 border-slate-200 text-slate-800 hover:border-sky-300 shadow-2xs'
+                                : 'bg-slate-950/80 border-slate-800/90 text-slate-200 hover:border-slate-700'
+                            }`}
+                          >
+                            <div className="mt-0.5 shrink-0">
+                              {item.status === 'Concluído' ? (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                              ) : (
+                                <Circle className={`w-3.5 h-3.5 ${isLight ? 'text-slate-400' : 'text-slate-500'}`} />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className={item.status === 'Concluído' ? 'line-through text-slate-400' : 'font-medium'}>
+                                {item.title}
+                              </div>
+                              {item.description && (
+                                <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                                  {item.description}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                        {filteredItems.length === 0 && (
+                          <p className="text-[11px] text-slate-500 italic py-1 text-center">
+                            Nenhum tópico cadastrado ainda. Clique em "+ Tópico".
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* External Materials Section */}
+                  <div className={`mt-3 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-slate-800/80'}`}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className={`text-[11px] font-medium flex items-center gap-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                        <FolderOpen className="w-3 h-3 text-purple-500" />
+                        Arquivos & Links Salvos ({attachments.length})
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenAttachDocModal(subcategory.id, subcategory.title)}
+                        className="text-[11px] text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-0.5 cursor-pointer font-medium"
+                      >
+                        <Plus className="w-3 h-3" /> Anexar
+                      </button>
+                    </div>
+
+                    {attachments.length > 0 && (
+                      <div className="space-y-1 mt-1.5 max-h-36 overflow-y-auto pr-1">
+                        {attachments.map((att) => (
+                          <div
+                            key={att.id}
+                            className={`flex items-center justify-between p-1.5 rounded border text-xs ${
+                              isLight
+                                ? 'bg-white/80 border-slate-200 text-slate-800'
+                                : 'bg-slate-950/80 border-slate-800/80 text-slate-200'
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPreviewAttachment(att);
+                                setPreviewModuleTitle(subcategory.title);
+                              }}
+                              className="font-medium text-purple-600 dark:text-purple-400 hover:underline truncate flex items-center gap-1.5 cursor-pointer text-left flex-1"
+                              title={att.name}
+                            >
+                              <FileText className="w-3 h-3 shrink-0 text-purple-500" />
+                              <span className="truncate">{att.name}</span>
+                              <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                                ({formatFileSize(att.size)})
+                              </span>
+                            </button>
+
+                            <div className="flex items-center gap-1 shrink-0 ml-1">
+                              {att.dataUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const a = document.createElement('a');
+                                    a.href = att.dataUrl!;
+                                    a.download = att.name;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                  }}
+                                  className="p-0.5 text-slate-400 hover:text-sky-500"
+                                  title="Baixar arquivo"
+                                >
+                                  <Download className="w-3 h-3" />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteModuleAttachment(subcategory.id, att.id)}
+                                className="text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer transition"
+                                title="Remover anexo"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Module Notes & Abatement Badges Section */}
+                  <div className={`mt-3 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-slate-800/80'}`}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedGridNotes((prev) => ({
+                            ...prev,
+                            [subcategory.id]: !isNotesExpanded,
+                          }))
+                        }
+                        className={`text-[11px] font-medium flex items-center gap-1 cursor-pointer transition ${
+                          isLight ? 'text-slate-700 hover:text-sky-800' : 'text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        <FileText className="w-3 h-3 text-amber-500" />
+                        <span>Anotações & Abatimentos ({moduleNotes.length})</span>
+                        {isNotesExpanded ? (
+                          <ChevronDown className="w-3 h-3 text-slate-400" />
+                        ) : (
+                          <ChevronRight className="w-3 h-3 text-slate-400" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => openQuickNoteModal(subcategory)}
+                        className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-0.5 cursor-pointer font-bold"
+                        title="Escrever anotação e abater % da carga horária"
+                      >
+                        <Plus className="w-3 h-3" /> Anotar (+%)
+                      </button>
+                    </div>
+
+                    {moduleNotes.length > 0 && isNotesExpanded && (
+                      <div className="space-y-1.5 mt-1.5 max-h-40 overflow-y-auto pr-1">
+                        {moduleNotes.map((nt) => (
+                          <div
+                            key={nt.id}
+                            className={`p-2 rounded-lg border text-xs space-y-1 ${
+                              isLight
+                                ? 'bg-white/90 border-slate-200 text-slate-800 shadow-2xs'
+                                : 'bg-slate-950/80 border-slate-800/90 text-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-bold truncate text-[11px]">{nt.title}</span>
+                              <div className="flex items-center gap-1 shrink-0">
+                                {nt.studyPercent && (
+                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                    +{nt.studyPercent}%
+                                  </span>
+                                )}
+                                {nt.studyHours && (
+                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30">
+                                    {nt.studyHours}h
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <p className={`text-[10px] line-clamp-2 leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                              {nt.content}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card Footer Actions */}
+                <div className={`mt-4 pt-3 border-t flex items-center justify-between gap-1.5 text-xs ${
+                  isLight ? 'border-slate-200/90' : 'border-slate-800/80'
+                }`}>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => openQuickNoteModal(subcategory)}
+                      className="btn-3d-amber px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-xs"
+                      title="Adicionar anotação com horas e abatimento de percentual"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-amber-200" />
+                      Anotar (+%)
+                    </button>
+
+                    {onStartPomodoroForTrack && (
+                      <button
+                        type="button"
+                        onClick={() => onStartPomodoroForTrack(track.title, subcategory.title)}
+                        className="btn-3d-primary px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-xs"
+                        title="Focar com Pomodoro neste módulo"
+                      >
+                        <Timer className="w-3 h-3" />
+                        Pomodoro
+                      </button>
+                    )}
+
+                    {onOpenNotesForModule && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenNotesForModule(track.id, subcategory.id)}
+                        className={`px-2 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer transition ${
+                          isLight
+                            ? 'bg-white hover:bg-sky-50 text-slate-800 border border-slate-300 shadow-2xs'
+                            : 'btn-3d-dark text-slate-300 hover:text-white'
+                        }`}
+                        title="Ver todas as anotações no Bloco de Notas"
+                      >
+                        <MessageSquare className="w-3 h-3 text-sky-500" />
+                        Ver Notas
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveSubcategoryIdForItem(subcategory.id);
+                        setItemToEdit(null);
+                        setIsItemModalOpen(true);
+                      }}
+                      className={`p-1.5 rounded-lg border text-xs cursor-pointer transition ${
+                        isLight
+                          ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+                          : 'btn-3d-dark text-slate-300 hover:text-white'
+                      }`}
+                      title="Adicionar Novo Tópico"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* Alternative Detailed List View */
+        <div className="space-y-5">
+          {track.subcategories?.map((subcategory, index) => {
+            const isCollapsed = !!collapsedSubcategories[subcategory.id];
 
           // Filter items by search query if any
           const filteredItems = subcategory.items?.filter((item) => {
@@ -1645,6 +2446,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
           </div>
         )}
       </div>
+      )}
       </>
       )}
 
@@ -1696,6 +2498,278 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
           itemTitle={videoModalItemTitle}
           onSaveQuickNote={handleSaveNoteFromPlayer}
         />
+      )}
+
+      {/* Quick Workload & Hours Modal */}
+      {quickHoursModalSub && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div
+            className={`w-full max-w-md rounded-2xl border p-5 shadow-2xl space-y-4 ${
+              isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0d1c34] border-slate-700 text-white'
+            }`}
+          >
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h3 className="text-base font-bold">Carga Horária & Meta do Módulo</h3>
+                <p className="text-xs text-slate-500 mt-0.5">{quickHoursModalSub.title}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQuickHoursModalSub(null)}
+                className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuickHours} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                  Carga Horária Total Prevista (horas)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  step="0.5"
+                  value={quickHoursEst}
+                  onChange={(e) => setQuickHoursEst(Number(e.target.value))}
+                  className={`w-full px-3 py-2 rounded-lg text-sm border ${
+                    isLight ? 'bg-slate-50 border-slate-300' : 'bg-slate-900 border-slate-700'
+                  }`}
+                  required
+                />
+                <span className="text-[10px] text-slate-500">Ex: 40h para um curso completo.</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                  Horas Estudadas até Agora (horas)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={quickHoursSpent}
+                  onChange={(e) => {
+                    const spent = Number(e.target.value);
+                    setQuickHoursSpent(spent);
+                    if (quickHoursEst > 0) {
+                      setQuickHoursPercent(Math.min(100, Math.round((spent / quickHoursEst) * 100)));
+                    }
+                  }}
+                  className={`w-full px-3 py-2 rounded-lg text-sm border ${
+                    isLight ? 'bg-slate-50 border-slate-300' : 'bg-slate-900 border-slate-700'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                  Percentual de Conclusão (%)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={quickHoursPercent}
+                    onChange={(e) => setQuickHoursPercent(Number(e.target.value))}
+                    className="flex-1 accent-sky-500"
+                  />
+                  <span className="w-12 text-right font-mono font-bold text-sm">{quickHoursPercent}%</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                  Status do Módulo
+                </label>
+                <select
+                  value={quickHoursStatus}
+                  onChange={(e) => setQuickHoursStatus(e.target.value as CertStatus)}
+                  className={`w-full px-3 py-2 rounded-lg text-sm border ${
+                    isLight ? 'bg-slate-50 border-slate-300' : 'bg-slate-900 border-slate-700'
+                  }`}
+                >
+                  <option value="Planejada">Planejada</option>
+                  <option value="Em Andamento">Em Andamento</option>
+                  <option value="Concluída">Concluída</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                <button
+                  type="button"
+                  onClick={() => setQuickHoursModalSub(null)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn-3d-primary px-4 py-1.5 rounded-lg text-xs font-bold cursor-pointer"
+                >
+                  Salvar Carga Horária
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Note with Percentage Abatement Modal */}
+      {quickNoteModalSub && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div
+            className={`w-full max-w-lg rounded-2xl border p-5 shadow-2xl space-y-4 ${
+              isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0d1c34] border-slate-700 text-white'
+            }`}
+          >
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <h3 className="text-base font-bold flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-amber-500" />
+                  Anotação & Abatimento de Carga Horária
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Módulo: <span className="font-semibold text-sky-500">{quickNoteModalSub.title}</span> · Meta: {quickNoteModalSub.hoursSpent || 0}h/{quickNoteModalSub.estimatedHours || 40}h ({quickNoteModalSub.completedPercent || 0}%)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQuickNoteModalSub(null)}
+                className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveQuickNote} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                  Título da Anotação
+                </label>
+                <input
+                  type="text"
+                  value={quickNoteTitle}
+                  onChange={(e) => setQuickNoteTitle(e.target.value)}
+                  placeholder="Ex: Resumo Aula 03 - Riscos de IA e Governança"
+                  className={`w-full px-3 py-2 rounded-lg text-sm border ${
+                    isLight ? 'bg-slate-50 border-slate-300' : 'bg-slate-900 border-slate-700'
+                  }`}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                  Conteúdo / Conceitos / Notas de Aula
+                </label>
+                <textarea
+                  rows={4}
+                  value={quickNoteContent}
+                  onChange={(e) => setQuickNoteContent(e.target.value)}
+                  placeholder="Escreva seus aprendizados, insights, referências da aula..."
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-mono border ${
+                    isLight ? 'bg-slate-50 border-slate-300' : 'bg-slate-900 border-slate-700'
+                  }`}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border bg-slate-500/5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1">
+                    Horas Estudadas nesta Anotação
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={quickNoteHours}
+                    onChange={(e) => {
+                      const h = e.target.value === '' ? '' : Number(e.target.value);
+                      setQuickNoteHours(h);
+                      if (quickNoteAutoPercent && typeof h === 'number' && h > 0) {
+                        const est = quickNoteModalSub.estimatedHours || 40;
+                        setQuickNotePercent(Math.min(100, Math.round((h / est) * 100)));
+                      }
+                    }}
+                    placeholder="Ex: 2 (horas)"
+                    className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono border ${
+                      isLight ? 'bg-white border-slate-300' : 'bg-slate-900 border-slate-700'
+                    }`}
+                  />
+                  <span className="text-[10px] text-slate-500">Soma nas estatísticas semanais</span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1">
+                    % Abatido do Módulo
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={quickNotePercent}
+                    onChange={(e) => {
+                      setQuickNoteAutoPercent(false);
+                      setQuickNotePercent(e.target.value === '' ? '' : Number(e.target.value));
+                    }}
+                    placeholder="Ex: 15 (%)"
+                    className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono border ${
+                      isLight ? 'bg-white border-slate-300' : 'bg-slate-900 border-slate-700'
+                    }`}
+                  />
+                  <div className="flex items-center gap-1 mt-1">
+                    {[10, 20, 25, 50, 100].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => {
+                          setQuickNoteAutoPercent(false);
+                          setQuickNotePercent(pct);
+                        }}
+                        className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-sky-500/10 text-sky-500 hover:bg-sky-500/20 cursor-pointer"
+                      >
+                        +{pct}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Dynamic live calculation preview */}
+              <div className="p-3 rounded-xl border border-sky-400/40 bg-sky-500/10 text-xs">
+                <span className="font-semibold text-sky-400 block mb-0.5">Impacto no Módulo:</span>
+                <span>
+                  O módulo avançará de <strong>{quickNoteModalSub.completedPercent || 0}%</strong> para{' '}
+                  <strong className="text-emerald-400">
+                    {Math.min(100, (quickNoteModalSub.completedPercent || 0) + (Number(quickNotePercent) || 0))}%
+                  </strong>{' '}
+                  (+{Number(quickNotePercent) || 0}%) e somará{' '}
+                  <strong>{Number(quickNoteHours) || 0}h</strong> às {quickNoteModalSub.hoursSpent || 0}h já estudadas.
+                </span>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                <button
+                  type="button"
+                  onClick={() => setQuickNoteModalSub(null)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn-3d-amber px-4 py-1.5 rounded-lg text-xs font-bold shadow-md cursor-pointer"
+                >
+                  Salvar Anotação e Abater %
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

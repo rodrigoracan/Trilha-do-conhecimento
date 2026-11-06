@@ -20,7 +20,10 @@ import {
   FileCode,
   FileCheck,
   ArrowLeft,
-  BarChart3
+  BarChart3,
+  Clock,
+  X,
+  Edit2
 } from 'lucide-react';
 import { CertificationHoursD3Chart } from './CertificationHoursD3Chart';
 
@@ -57,6 +60,34 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const [showHoursChart, setShowHoursChart] = useState<boolean>(true);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
+  const [editingHoursCert, setEditingHoursCert] = useState<Certification | null>(null);
+  const [tempEstHours, setTempEstHours] = useState<number>(60);
+  const [tempSpentHours, setTempSpentHours] = useState<number>(0);
+
+  const openHoursModal = (cert: Certification) => {
+    setEditingHoursCert(cert);
+    setTempEstHours(cert.estimatedHours);
+    setTempSpentHours(cert.hoursSpent);
+  };
+
+  const handleSaveHours = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingHoursCert) return;
+    const est = Math.max(1, Number(tempEstHours) || 1);
+    const spent = Math.max(0, Number(tempSpentHours) || 0);
+    const nextStatus: CertStatus =
+      editingHoursCert.status === 'Planejada' && spent > 0
+        ? 'Em Andamento'
+        : editingHoursCert.status;
+
+    onUpdateCert({
+      ...editingHoursCert,
+      estimatedHours: est,
+      hoursSpent: spent,
+      status: nextStatus,
+    });
+    setEditingHoursCert(null);
+  };
 
   const categories = ['Todas', 'Governança', 'MLOps', 'Segurança', 'Auditoria', 'Técnica'];
 
@@ -399,15 +430,26 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                   )}
                 </div>
 
-                {/* Progress Bar */}
+                {/* Progress Bar & Quick Hours Adjustment */}
                 <div className={`mt-4 pt-3 border-t ${isLight ? 'border-slate-200/90' : 'border-slate-800/80'}`}>
                   <div className={`flex items-center justify-between text-xs mb-1.5 font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
                     <span>
                       Progresso: <strong className={`font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>{progressPercent}%</strong>
                     </span>
-                    <span className={`text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                      {cert.hoursSpent}h / {cert.estimatedHours}h
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openHoursModal(cert)}
+                      className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border transition flex items-center gap-1 cursor-pointer ${
+                        isLight
+                          ? 'bg-white hover:bg-sky-50 text-sky-900 border-sky-300 shadow-2xs hover:border-sky-500'
+                          : 'bg-slate-950/80 hover:bg-slate-900 text-sky-300 border-sky-500/40 hover:border-sky-400'
+                      }`}
+                      title="Clique para ajustar a carga horária total e horas estudadas"
+                    >
+                      <Clock className="w-3 h-3 text-sky-500 shrink-0" />
+                      <span>{cert.hoursSpent}h / {cert.estimatedHours}h</span>
+                      <Edit2 className="w-2.5 h-2.5 text-slate-400 opacity-80" />
+                    </button>
                   </div>
                   <div className={`w-full h-2 rounded-full overflow-hidden border shadow-inner ${
                     isLight ? 'bg-slate-200/90 border-slate-300/60' : 'bg-slate-950/90 border-slate-800/80'
@@ -620,6 +662,136 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
           );
         })}
       </div>
+
+      {/* Quick Modal for Setting Total & Studied Hours */}
+      {editingHoursCert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-md bg-[#0f1b33] border-2 border-sky-500/50 rounded-2xl p-5 text-slate-100 text-xs shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white tracking-tight">
+                    Ajustar Horas · {editingHoursCert.code}
+                  </h3>
+                  <p className="text-[11px] text-slate-400 truncate max-w-[280px]">
+                    {editingHoursCert.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingHoursCert(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveHours} className="mt-4 space-y-4">
+              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-slate-300 font-bold text-xs">
+                      Carga Horária Total / Estimada (Horas):
+                    </label>
+                    <span className="text-[10px] text-sky-400 font-mono">Meta</span>
+                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    required
+                    value={tempEstHours}
+                    onChange={(e) => setTempEstHours(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm font-bold focus:outline-none focus:border-sky-500"
+                  />
+                  <div className="flex gap-1.5 mt-1.5">
+                    {[40, 60, 80, 100, 120].map((h) => (
+                      <button
+                        key={h}
+                        type="button"
+                        onClick={() => setTempEstHours(h)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold cursor-pointer transition ${
+                          tempEstHours === h
+                            ? 'bg-sky-600 text-white'
+                            : 'bg-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {h}h
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-800/80">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-slate-300 font-bold text-xs">
+                      Horas Já Estudadas (Acumuladas):
+                    </label>
+                    <span className="text-[10px] text-emerald-400 font-mono">Realizado</span>
+                  </div>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    required
+                    value={tempSpentHours}
+                    onChange={(e) => setTempSpentHours(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-emerald-400 font-mono text-sm font-bold focus:outline-none focus:border-emerald-500"
+                  />
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <span className="text-[10px] text-slate-400">Adicionar rápido:</span>
+                    {[1, 2, 5, 10].map((add) => (
+                      <button
+                        key={add}
+                        type="button"
+                        onClick={() => setTempSpentHours((prev) => Number((prev + add).toFixed(1)))}
+                        className="px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 hover:bg-emerald-900 text-[10px] font-mono font-bold cursor-pointer"
+                      >
+                        +{add}h
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Dynamic Live Calculation Card */}
+              <div className="p-3 rounded-xl bg-sky-950/40 border border-sky-800/50 flex items-center justify-between text-xs font-mono">
+                <div>
+                  <span className="text-slate-400 block text-[10px] font-sans">Restante a Abater</span>
+                  <span className="font-bold text-amber-300 text-sm">
+                    {Math.max(0, Number((tempEstHours - tempSpentHours).toFixed(1)))}h
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-slate-400 block text-[10px] font-sans">Progresso Calculado</span>
+                  <span className="font-bold text-emerald-400 text-sm">
+                    {tempEstHours > 0 ? Math.min(100, Math.round((tempSpentHours / tempEstHours) * 100)) : 0}%
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingHoursCert(null)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white cursor-pointer font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn-3d-primary px-4 py-1.5 rounded-lg font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
+                >
+                  Salvar Horas & Atualizar Gráficos
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

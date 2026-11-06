@@ -85,7 +85,7 @@ export const initialCertifications: Certification[] = [
     title: 'IAPP AIGP - Artificial Intelligence Governance Professional',
     issuer: 'IAPP',
     category: 'Governança',
-    description: '',
+    description: 'Certificação de Governança de Inteligência Artificial (AIGP / AICP) cobrindo tipologias de IA, regulação global (EU AI Act), NIST AI RMF e ciclo de vida responsável.',
     status: 'Planejada',
     targetGate: 'Gate 2',
     targetMonths: 'Meses 5 a 8',

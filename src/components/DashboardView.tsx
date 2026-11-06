@@ -90,10 +90,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     );
   }, [certifications]);
 
-  // Aggregate total (taking max or sum of verified tracked hours)
+  const totalHoursFromTracks = useMemo(() => {
+    return Number(
+      (knowledgeTracks || [])
+        .flatMap((t) => t.subcategories || [])
+        .reduce((acc, s) => acc + (s.hoursSpent || 0), 0)
+        .toFixed(1)
+    );
+  }, [knowledgeTracks]);
+
+  // Aggregate total (taking max of session focus minutes or sum of tracked module/cert hours)
   const totalHoursStudied = useMemo(() => {
-    return Math.max(totalHoursFromSessions, totalHoursFromCerts);
-  }, [totalHoursFromSessions, totalHoursFromCerts]);
+    const totalConfigured = Number((totalHoursFromCerts + totalHoursFromTracks).toFixed(1));
+    return Math.max(totalHoursFromSessions, totalConfigured);
+  }, [totalHoursFromSessions, totalHoursFromCerts, totalHoursFromTracks]);
 
   // 2. STATISTIC: Weekly Productivity & Current Week Hours
   const { currentWeekHours, lastWeekHours, weeklyPercentage, streakDays, dailyAverageMinutes } = useMemo(() => {
@@ -381,24 +391,44 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       categoryMap.set(cat, existing);
     });
 
+    (knowledgeTracks || []).forEach((t) => {
+      const cat = t.category || 'Governança';
+      const existing = categoryMap.get(cat) || {
+        name: cat,
+        hours: 0,
+        count: 0,
+        color: colors[cat] || '#60a5fa',
+      };
+      const trackHours = (t.subcategories || []).reduce((acc, s) => acc + (s.hoursSpent || 0), 0);
+      existing.hours += trackHours;
+      existing.count += t.subcategories?.length || 1;
+      categoryMap.set(cat, existing);
+    });
+
     const list = Array.from(categoryMap.values()).map((item) => ({
       ...item,
       hours: Number(item.hours.toFixed(1)),
     }));
 
     return list.sort((a, b) => b.hours - a.hours);
-  }, [certifications]);
+  }, [certifications, knowledgeTracks]);
 
-  // Overall modules & progress stats
+  // Overall modules & progress stats across certifications and knowledge tracks
   const totalModules = useMemo(() => {
-    return certifications.reduce((acc, c) => acc + (c.modules?.length || 0), 0);
-  }, [certifications]);
+    const certMods = certifications.reduce((acc, c) => acc + (c.modules?.length || 0), 0);
+    const trackMods = (knowledgeTracks || []).reduce((acc, t) => acc + (t.subcategories?.length || 0), 0);
+    return certMods + trackMods;
+  }, [certifications, knowledgeTracks]);
 
   const completedModules = useMemo(() => {
-    return certifications.reduce((acc, c) => {
+    const certDone = certifications.reduce((acc, c) => {
       return acc + (c.modules?.filter((m) => m.completed)?.length || 0);
     }, 0);
-  }, [certifications]);
+    const trackDone = (knowledgeTracks || []).reduce((acc, t) => {
+      return acc + (t.subcategories?.filter((s) => s.status === 'Concluída' || (s.completedPercent && s.completedPercent >= 100))?.length || 0);
+    }, 0);
+    return certDone + trackDone;
+  }, [certifications, knowledgeTracks]);
 
   const moduleCompletionPercent = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
 

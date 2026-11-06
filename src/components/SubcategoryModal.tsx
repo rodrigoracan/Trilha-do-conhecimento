@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, FolderPlus, Palette } from 'lucide-react';
-import { TrackSubcategory, ColorThemeType } from '../types';
+import { TrackSubcategory, ColorThemeType, CertStatus } from '../types';
+import { Clock, CheckCircle2 } from 'lucide-react';
 
 interface SubcategoryModalProps {
   isOpen: boolean;
@@ -20,17 +21,29 @@ export const SubcategoryModal: React.FC<SubcategoryModalProps> = ({
   const isLight = theme === 'light';
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [colorTheme, setColorTheme] = useState<ColorThemeType>('purple');
+  const [colorTheme, setColorTheme] = useState<ColorThemeType>('sky');
+  const [estimatedHours, setEstimatedHours] = useState<number>(10);
+  const [hoursSpent, setHoursSpent] = useState<number>(0);
+  const [completedPercent, setCompletedPercent] = useState<number>(0);
+  const [status, setStatus] = useState<CertStatus>('Planejada');
 
   useEffect(() => {
     if (subcategoryToEdit) {
       setTitle(subcategoryToEdit.title || '');
       setDescription(subcategoryToEdit.description || '');
-      setColorTheme(subcategoryToEdit.colorTheme || 'purple');
+      setColorTheme(subcategoryToEdit.colorTheme || 'sky');
+      setEstimatedHours(subcategoryToEdit.estimatedHours || 10);
+      setHoursSpent(subcategoryToEdit.hoursSpent || 0);
+      setCompletedPercent(subcategoryToEdit.completedPercent || 0);
+      setStatus(subcategoryToEdit.status || (subcategoryToEdit.completedPercent && subcategoryToEdit.completedPercent >= 100 ? 'Concluída' : subcategoryToEdit.hoursSpent ? 'Em Andamento' : 'Planejada'));
     } else {
       setTitle('');
       setDescription('');
-      setColorTheme('purple');
+      setColorTheme('sky');
+      setEstimatedHours(10);
+      setHoursSpent(0);
+      setCompletedPercent(0);
+      setStatus('Planejada');
     }
   }, [subcategoryToEdit, isOpen]);
 
@@ -43,6 +56,10 @@ export const SubcategoryModal: React.FC<SubcategoryModalProps> = ({
       title: title.trim(),
       description: description.trim(),
       colorTheme,
+      estimatedHours: Math.max(1, Number(estimatedHours) || 10),
+      hoursSpent: Math.max(0, Number(hoursSpent) || 0),
+      completedPercent: Math.min(100, Math.max(0, Number(completedPercent) || 0)),
+      status,
     });
     onClose();
   };
@@ -115,7 +132,7 @@ export const SubcategoryModal: React.FC<SubcategoryModalProps> = ({
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={3}
+              rows={2}
               placeholder="Ex: Domínio de algoritmos supervisionados e não-supervisionados com Scikit-Learn e PyTorch."
               className={`w-full px-3 py-2 rounded-lg text-xs transition focus:outline-none focus:ring-2 focus:ring-sky-500/30 ${
                 isLight
@@ -123,6 +140,75 @@ export const SubcategoryModal: React.FC<SubcategoryModalProps> = ({
                   : 'bg-[#081224] border border-slate-700 text-white placeholder-slate-500 focus:border-sky-500'
               }`}
             />
+          </div>
+
+          {/* Workload and Progress Section */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 p-3 rounded-xl border bg-slate-950/40 border-slate-800">
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                Status
+              </label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as CertStatus)}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold focus:outline-none border ${
+                  isLight ? 'bg-white border-slate-300 text-slate-800' : 'bg-slate-900 border-slate-700 text-slate-200'
+                }`}
+              >
+                <option value="Planejada">Planejada</option>
+                <option value="Em Andamento">Em Andamento</option>
+                <option value="Concluída">Concluída</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                Carga Total (h)
+              </label>
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={estimatedHours}
+                onChange={(e) => setEstimatedHours(Number(e.target.value))}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold focus:outline-none border ${
+                  isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-white'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                Já Estudadas (h)
+              </label>
+              <input
+                type="number"
+                min={0}
+                step={0.5}
+                value={hoursSpent}
+                onChange={(e) => setHoursSpent(Number(e.target.value))}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold focus:outline-none border ${
+                  isLight ? 'bg-white border-slate-300 text-emerald-700' : 'bg-slate-900 border-slate-700 text-emerald-400'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                Concluído (%)
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={5}
+                value={completedPercent}
+                onChange={(e) => setCompletedPercent(Number(e.target.value))}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold focus:outline-none border ${
+                  isLight ? 'bg-white border-slate-300 text-sky-800' : 'bg-slate-900 border-slate-700 text-sky-400'
+                }`}
+              />
+            </div>
           </div>
 
           {/* Color theme selection */}

@@ -65,6 +65,12 @@ export interface StudyNote {
   title: string;
   content: string;
   certificationId?: string;
+  trackId?: string;
+  trackTitle?: string;
+  subcategoryId?: string;
+  subcategoryTitle?: string;
+  studyHours?: number;
+  studyPercent?: number;
   attachments?: ExternalResource[];
   links?: { title: string; url: string }[];
   technique?: 'feynman' | 'active_recall' | 'resumo' | 'geral';
@@ -192,6 +198,10 @@ export interface TrackSubcategory {
   items: TrackItem[];
   attachments?: TrackAttachment[];
   order: number;
+  estimatedHours?: number;
+  hoursSpent?: number;
+  completedPercent?: number;
+  status?: CertStatus;
 }
 
 export type WeekDay = 'Segunda' | 'Terça' | 'Quarta' | 'Quinta' | 'Sexta' | 'Sábado' | 'Domingo';

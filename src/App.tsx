@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Certification,
+  CertStatus,
   ScheduleGate,
   StudyNote,
   ActionReminder,
@@ -79,8 +80,10 @@ export default function App() {
   const [geminiTrackContext, setGeminiTrackContext] = useState<string>('');
   const [selectedNotebookBookId, setSelectedNotebookBookId] = useState<string>('');
 
-  // Focus targets
+  // Focus targets & note navigation
   const [selectedCertIdForFocus, setSelectedCertIdForFocus] = useState<string>('');
+  const [selectedTrackIdForNotes, setSelectedTrackIdForNotes] = useState<string>('');
+  const [selectedSubcategoryIdForNotes, setSelectedSubcategoryIdForNotes] = useState<string>('');
 
   // Update Notebooks in database & persistent storage
   const handleUpdateNotebooks = (updatedBooks: NotebookBook[]) => {
@@ -440,29 +443,175 @@ export default function App() {
     });
   };
 
-  // --- NOTES ACTIONS ---
+  // --- NOTES ACTIONS WITH AUTOMATIC HOURS DEDUCTION & PROGRESS CALCULATION ---
   const handleSaveNote = (note: StudyNote) => {
     updateDbAndPersist((prev) => {
-      const exists = prev.notes.some((n) => n.id === note.id);
-      if (exists) {
-        return {
-          ...prev,
-          notes: prev.notes.map((n) => (n.id === note.id ? note : n)),
-        };
+      const existingNote = prev.notes.find((n) => n.id === note.id);
+      const prevHours = existingNote?.studyHours || 0;
+      const newHours = note.studyHours || 0;
+      const hoursDelta = Number((newHours - prevHours).toFixed(1));
+
+      // 1. Update certifications if note is linked to a certification
+      let updatedCerts = prev.certifications;
+      if (note.certificationId && hoursDelta !== 0) {
+        updatedCerts = prev.certifications.map((c) => {
+          if (c.id === note.certificationId) {
+            const nextSpent = Math.max(0, Number(((c.hoursSpent || 0) + hoursDelta).toFixed(1)));
+            const nextStatus: CertStatus =
+              c.status === 'Planejada' && nextSpent > 0 ? 'Em Andamento' : c.status;
+            const updated = {
+              ...c,
+              hoursSpent: nextSpent,
+              status: nextStatus,
+            };
+            syncWithCloudSQL('/api/certifications', 'POST', updated);
+            return updated;
+          }
+          return c;
+        });
       }
+
+      // 2. Update knowledge tracks & modules if note is linked to a track and module
+      let updatedTracks = prev.knowledgeTracks || [];
+      if (note.trackId && note.subcategoryId) {
+        const prevPercent = existingNote?.studyPercent || 0;
+        const newPercent = note.studyPercent || 0;
+        let percentDelta = Number((newPercent - prevPercent).toFixed(1));
+
+        updatedTracks = updatedTracks.map((t) => {
+          if (t.id !== note.trackId) return t;
+          const updatedSubs = (t.subcategories || []).map((sub) => {
+            if (sub.id !== note.subcategoryId) return sub;
+            if (percentDelta === 0 && hoursDelta !== 0 && sub.estimatedHours) {
+              percentDelta = Math.round((hoursDelta / sub.estimatedHours) * 100);
+            }
+            const nextSpent = Math.max(0, Number(((sub.hoursSpent || 0) + hoursDelta).toFixed(1)));
+            const nextPercent = Math.min(
+              100,
+              Math.max(0, Math.round((sub.completedPercent || 0) + percentDelta))
+            );
+            const nextStatus: CertStatus =
+              nextPercent >= 100
+                ? 'Concluída'
+                : nextPercent > 0
+                ? 'Em Andamento'
+                : sub.status || 'Planejada';
+
+            return {
+              ...sub,
+              hoursSpent: nextSpent,
+              completedPercent: nextPercent,
+              status: nextStatus,
+            };
+          });
+          const updatedTrackObj = { ...t, subcategories: updatedSubs, updatedAt: new Date().toISOString() };
+          if (selectedTrack?.id === t.id) {
+            setSelectedTrack(updatedTrackObj);
+          }
+          return updatedTrackObj;
+        });
+      }
+
+      // 3. Create or update studySessions for analytics/D3/Dashboard
+      let updatedSessions = prev.studySessions;
+      const sessionNoteId = `session-note-${note.id}`;
+      if (newHours > 0) {
+        const certLinked = prev.certifications.find((c) => c.id === note.certificationId);
+        const targetTitle =
+          certLinked?.title ||
+          (note.trackTitle ? `${note.trackTitle}${note.subcategoryTitle ? ` - ${note.subcategoryTitle.split(':')[0]}` : ''}` : 'Anotação de Estudo');
+
+        const noteSession: StudySession = {
+          id: sessionNoteId,
+          date: note.updatedAt || new Date().toISOString(),
+          minutes: Math.round(newHours * 60),
+          certificationId: note.certificationId,
+          certificationTitle: targetTitle,
+          mode: 'focus',
+        };
+        const hasSession = prev.studySessions.some((s) => s.id === sessionNoteId);
+        if (hasSession) {
+          updatedSessions = prev.studySessions.map((s) => (s.id === sessionNoteId ? noteSession : s));
+        } else {
+          updatedSessions = [noteSession, ...prev.studySessions];
+        }
+        syncWithCloudSQL('/api/study-sessions', 'POST', noteSession);
+      } else {
+        updatedSessions = prev.studySessions.filter((s) => s.id !== sessionNoteId);
+      }
+
+      // 4. Update notes
+      const exists = prev.notes.some((n) => n.id === note.id);
+      const nextNotes = exists
+        ? prev.notes.map((n) => (n.id === note.id ? note : n))
+        : [note, ...prev.notes];
+
       return {
         ...prev,
-        notes: [note, ...prev.notes],
+        notes: nextNotes,
+        certifications: updatedCerts,
+        knowledgeTracks: updatedTracks,
+        studySessions: updatedSessions,
       };
     });
     syncWithCloudSQL('/api/notes', 'POST', note);
   };
 
   const handleDeleteNote = (id: string) => {
-    updateDbAndPersist((prev) => ({
-      ...prev,
-      notes: prev.notes.filter((n) => n.id !== id),
-    }));
+    updateDbAndPersist((prev) => {
+      const noteToDelete = prev.notes.find((n) => n.id === id);
+      let updatedCerts = prev.certifications;
+      if (noteToDelete?.studyHours && noteToDelete.certificationId) {
+        const hoursToSubtract = noteToDelete.studyHours;
+        updatedCerts = prev.certifications.map((c) => {
+          if (c.id === noteToDelete.certificationId) {
+            const nextSpent = Math.max(0, Number(((c.hoursSpent || 0) - hoursToSubtract).toFixed(1)));
+            const updated = {
+              ...c,
+              hoursSpent: nextSpent,
+            };
+            syncWithCloudSQL('/api/certifications', 'POST', updated);
+            return updated;
+          }
+          return c;
+        });
+      }
+
+      let updatedTracks = prev.knowledgeTracks || [];
+      if (noteToDelete?.trackId && noteToDelete.subcategoryId) {
+        const hoursSub = noteToDelete.studyHours || 0;
+        const percentSub = noteToDelete.studyPercent || 0;
+        updatedTracks = updatedTracks.map((t) => {
+          if (t.id !== noteToDelete.trackId) return t;
+          const updatedSubs = (t.subcategories || []).map((sub) => {
+            if (sub.id !== noteToDelete.subcategoryId) return sub;
+            const nextSpent = Math.max(0, Number(((sub.hoursSpent || 0) - hoursSub).toFixed(1)));
+            const nextPercent = Math.max(0, Math.round((sub.completedPercent || 0) - percentSub));
+            return {
+              ...sub,
+              hoursSpent: nextSpent,
+              completedPercent: nextPercent,
+            };
+          });
+          const updatedTrackObj = { ...t, subcategories: updatedSubs, updatedAt: new Date().toISOString() };
+          if (selectedTrack?.id === t.id) {
+            setSelectedTrack(updatedTrackObj);
+          }
+          return updatedTrackObj;
+        });
+      }
+
+      const sessionNoteId = `session-note-${id}`;
+      const updatedSessions = prev.studySessions.filter((s) => s.id !== sessionNoteId);
+
+      return {
+        ...prev,
+        notes: prev.notes.filter((n) => n.id !== id),
+        certifications: updatedCerts,
+        knowledgeTracks: updatedTracks,
+        studySessions: updatedSessions,
+      };
+    });
     syncWithCloudSQL(`/api/notes/${id}`, 'DELETE');
   };
 
@@ -658,6 +807,14 @@ export default function App() {
                 theme={theme}
                 studySessions={database.studySessions}
                 onLogStudyHours={(hours, trackTitle) => handleLogManualHours(hours, trackTitle)}
+                notes={database.notes}
+                onSaveNote={handleSaveNote}
+                onDeleteNote={handleDeleteNote}
+                onOpenNotesForModule={(trackId, subcategoryId) => {
+                  setSelectedTrackIdForNotes(trackId);
+                  setSelectedSubcategoryIdForNotes(subcategoryId || '');
+                  setActiveTab('notes');
+                }}
               />
             ) : (
               <TracksHubView
@@ -780,9 +937,13 @@ export default function App() {
             <NotesView
               notes={database.notes}
               certifications={database.certifications}
+              tracks={database.knowledgeTracks || []}
               onSaveNote={handleSaveNote}
               onDeleteNote={handleDeleteNote}
               selectedCertId={selectedCertIdForFocus}
+              selectedTrackId={selectedTrackIdForNotes}
+              selectedSubcategoryId={selectedSubcategoryIdForNotes}
+              theme={theme}
             />
           )}
 

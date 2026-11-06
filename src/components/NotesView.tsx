@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StudyNote, Certification, ExternalResource } from '../types';
+import { StudyNote, Certification, ExternalResource, KnowledgeTrack } from '../types';
 import { saveFileToIndexedDB, downloadFile } from '../utils/indexedDB';
 import {
   FileText,
@@ -15,27 +15,41 @@ import {
   ExternalLink,
   Plus,
   X,
-  Sparkles
+  Sparkles,
+  Clock
 } from 'lucide-react';
 
 interface NotesViewProps {
   notes: StudyNote[];
   certifications: Certification[];
+  tracks?: KnowledgeTrack[];
   onSaveNote: (note: StudyNote) => void;
   onDeleteNote: (id: string) => void;
   selectedCertId?: string;
+  selectedTrackId?: string;
+  selectedSubcategoryId?: string;
+  theme?: 'light' | 'dark';
 }
 
 export const NotesView: React.FC<NotesViewProps> = ({
   notes,
   certifications,
+  tracks = [],
   onSaveNote,
   onDeleteNote,
   selectedCertId,
+  selectedTrackId,
+  selectedSubcategoryId,
+  theme = 'light',
 }) => {
+  const isLight = theme === 'light';
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [certId, setCertId] = useState(selectedCertId || '');
+  const [trackId, setTrackId] = useState(selectedTrackId || '');
+  const [subcategoryId, setSubcategoryId] = useState(selectedSubcategoryId || '');
+  const [studyHours, setStudyHours] = useState<number | ''>('');
+  const [studyPercent, setStudyPercent] = useState<number | ''>('');
   const [tagsInput, setTagsInput] = useState('');
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
@@ -56,8 +70,19 @@ export const NotesView: React.FC<NotesViewProps> = ({
     if (selectedCertId) {
       setCertId(selectedCertId);
       setFilterCert(selectedCertId);
+      setTrackId('');
     }
   }, [selectedCertId]);
+
+  useEffect(() => {
+    if (selectedTrackId) {
+      setTrackId(selectedTrackId);
+      setCertId('');
+    }
+    if (selectedSubcategoryId) {
+      setSubcategoryId(selectedSubcategoryId);
+    }
+  }, [selectedTrackId, selectedSubcategoryId]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -67,7 +92,7 @@ export const NotesView: React.FC<NotesViewProps> = ({
     try {
       const resource = await saveFileToIndexedDB(
         file,
-        certId || 'geral',
+        certId || trackId || 'geral',
         `Anexo do Bloco de Notas: ${file.name}`
       );
       setAttachedFiles((prev) => [...prev, resource]);
@@ -108,12 +133,31 @@ export const NotesView: React.FC<NotesViewProps> = ({
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
 
+    const parsedHours =
+      typeof studyHours === 'number' && !isNaN(studyHours) && studyHours > 0
+        ? Number(studyHours.toFixed(1))
+        : undefined;
+
+    const parsedPercent =
+      typeof studyPercent === 'number' && !isNaN(studyPercent) && studyPercent > 0
+        ? Math.min(100, Number(studyPercent))
+        : undefined;
+
+    const matchedTrack = tracks.find((t) => t.id === trackId);
+    const matchedSub = matchedTrack?.subcategories?.find((s) => s.id === subcategoryId);
     const now = new Date().toISOString();
+
     const noteToSave: StudyNote = {
       id: editingNoteId || `note-${Date.now()}`,
       title: title.trim(),
       content: content.trim(),
       certificationId: certId || undefined,
+      trackId: trackId || undefined,
+      trackTitle: matchedTrack?.title || undefined,
+      subcategoryId: subcategoryId || undefined,
+      subcategoryTitle: matchedSub?.title || undefined,
+      studyHours: parsedHours,
+      studyPercent: parsedPercent,
       attachments: attachedFiles.length > 0 ? attachedFiles : undefined,
       links: attachedLinks.length > 0 ? attachedLinks : undefined,
       tags: tags.length > 0 ? tags : ['Estudos'],
@@ -130,6 +174,10 @@ export const NotesView: React.FC<NotesViewProps> = ({
   const resetForm = () => {
     setTitle('');
     setContent('');
+    setStudyHours('');
+    setStudyPercent('');
+    setTrackId('');
+    setSubcategoryId('');
     setTagsInput('');
     setAttachedFiles([]);
     setAttachedLinks([]);
@@ -142,6 +190,10 @@ export const NotesView: React.FC<NotesViewProps> = ({
     setTitle(note.title);
     setContent(note.content);
     setCertId(note.certificationId || '');
+    setTrackId(note.trackId || '');
+    setSubcategoryId(note.subcategoryId || '');
+    setStudyHours(typeof note.studyHours === 'number' ? note.studyHours : '');
+    setStudyPercent(typeof note.studyPercent === 'number' ? note.studyPercent : '');
     setTagsInput(note.tags.join(', '));
     setAttachedFiles(note.attachments || []);
     setAttachedLinks(note.links || []);
@@ -161,8 +213,9 @@ export const NotesView: React.FC<NotesViewProps> = ({
   const handleExportAllMarkdown = () => {
     let md = `# Anotações de Estudo - Trilha de Certificações de IA\n\n`;
     notes.forEach((n) => {
-      const certName = certifications.find((c) => c.id === n.certificationId)?.code || 'Geral';
-      md += `## ${n.title} [${certName}]\n*Criado em: ${new Date(n.createdAt).toLocaleDateString('pt-BR')}*\n\n${n.content}\n\n`;
+      const certName = certifications.find((c) => c.id === n.certificationId)?.code || n.trackTitle || 'Geral';
+      const hoursStr = n.studyHours ? ` (${n.studyHours}h dedicadas)` : '';
+      md += `## ${n.title} [${certName}]${hoursStr}\n*Criado em: ${new Date(n.createdAt).toLocaleDateString('pt-BR')}*\n\n${n.content}\n\n`;
       if (n.links && n.links.length > 0) {
         md += `**Links:**\n` + n.links.map((l) => `- ${l.title}: ${l.url}`).join('\n') + `\n\n`;
       }
@@ -192,6 +245,10 @@ export const NotesView: React.FC<NotesViewProps> = ({
     return matchesSearch && matchesCert;
   });
 
+  const selectedCert = certifications.find((c) => c.id === certId);
+  const selectedTrackObj = tracks.find((t) => t.id === trackId);
+  const selectedSubObj = selectedTrackObj?.subcategories?.find((s) => s.id === subcategoryId);
+
   return (
     <div className="space-y-4">
       {/* Top Header with Database Sync Badge */}
@@ -199,11 +256,11 @@ export const NotesView: React.FC<NotesViewProps> = ({
         <div className="flex items-center gap-2">
           <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
             <FileText className="w-4 h-4 text-sky-400" />
-            Bloco de Notas & Anotações
+            Bloco de Notas & Anotações de Estudo
           </h2>
           <span className="text-xs text-slate-400 font-mono">({filteredNotes.length})</span>
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-600/50 text-[10px] text-emerald-300 font-mono">
-            <Database className="w-2.5 h-2.5 text-emerald-400" /> Banco Ativo
+            <Database className="w-2.5 h-2.5 text-emerald-400" /> Carga Horária & Percentual Integrados
           </span>
         </div>
 
@@ -220,34 +277,205 @@ export const NotesView: React.FC<NotesViewProps> = ({
       {/* 3D Editor Box Connected to Database */}
       <div className="box-3d p-4">
         <form onSubmit={handleSubmit} className="space-y-3 text-xs">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="sm:col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            {/* Title */}
+            <div className="sm:col-span-5">
               <label className="block text-slate-400 mb-1 font-semibold">Título da Anotação *</label>
               <input
                 type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Análise da Cláusula 6.1 (ISO 42001) ou Pipeline MLOps..."
+                placeholder="Ex: Análise de Riscos, Legislações ou Resumo da Aula..."
                 className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 focus:outline-none focus:border-sky-500 font-semibold"
               />
             </div>
 
-            <div>
-              <label className="block text-slate-400 mb-1 font-semibold">Trilha Associada:</label>
+            {/* Certification / Track Association */}
+            <div className={selectedTrackObj?.subcategories && selectedTrackObj.subcategories.length > 0 ? "sm:col-span-4" : "sm:col-span-4"}>
+              <label className="block text-slate-400 mb-1 font-semibold">Trilha / Certificação:</label>
               <select
-                value={certId}
-                onChange={(e) => setCertId(e.target.value)}
+                value={certId || (trackId ? `track:${trackId}` : '')}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val.startsWith('track:')) {
+                    const tId = val.replace('track:', '');
+                    setTrackId(tId);
+                    setCertId('');
+                    // Auto-select first subcategory if available
+                    const tObj = tracks.find((t) => t.id === tId);
+                    if (tObj?.subcategories && tObj.subcategories.length > 0) {
+                      setSubcategoryId(tObj.subcategories[0].id);
+                    } else {
+                      setSubcategoryId('');
+                    }
+                  } else {
+                    setCertId(val);
+                    setTrackId('');
+                    setSubcategoryId('');
+                  }
+                }}
                 className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 focus:outline-none focus:border-sky-500 font-medium"
               >
-                <option value="">Geral / Conceitos</option>
-                {certifications.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.code} · {c.title.split('-')[0].trim()}
-                  </option>
-                ))}
+                <option value="">Geral / Conceitos Universais</option>
+                <optgroup label="Certificações de TI & IA (Carga Horária & Gates)">
+                  {certifications.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.code} · {c.title.split('-')[0].trim()} ({c.hoursSpent}h / {c.estimatedHours}h)
+                    </option>
+                  ))}
+                </optgroup>
+                {tracks && tracks.length > 0 && (
+                  <optgroup label="Trilhas de Conhecimento RACAN">
+                    {tracks.map((t) => (
+                      <option key={t.id} value={`track:${t.id}`}>
+                        {t.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             </div>
+
+            {/* Study Hours */}
+            <div className="sm:col-span-1.5">
+              <label className="block text-slate-400 mb-1 font-semibold flex items-center justify-between">
+                <span>Horas:</span>
+                <Clock className="w-3 h-3 text-emerald-400" />
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={50}
+                step={0.5}
+                value={studyHours}
+                onChange={(e) =>
+                  setStudyHours(e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value)))
+                }
+                placeholder="1.5h"
+                className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-emerald-400 focus:outline-none focus:border-emerald-500 font-mono font-bold"
+              />
+            </div>
+
+            {/* Study Percent of Module */}
+            <div className="sm:col-span-1.5">
+              <label className="block text-slate-400 mb-1 font-semibold flex items-center justify-between">
+                <span>% Módulo:</span>
+                <span className="text-[10px] text-sky-400 font-mono">%</span>
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={5}
+                value={studyPercent}
+                onChange={(e) =>
+                  setStudyPercent(e.target.value === '' ? '' : Math.min(100, Math.max(0, parseFloat(e.target.value))))
+                }
+                placeholder="Ex: 25%"
+                className="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-sky-400 focus:outline-none focus:border-sky-500 font-mono font-bold"
+              />
+            </div>
+          </div>
+
+          {/* Module Selector (when Track is chosen) */}
+          {selectedTrackObj?.subcategories && selectedTrackObj.subcategories.length > 0 && (
+            <div className="p-2.5 rounded-lg bg-sky-950/30 border border-sky-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2 flex-1">
+                <span className="text-[11px] font-bold text-sky-300 whitespace-nowrap">
+                  Módulo Específico da Trilha:
+                </span>
+                <select
+                  value={subcategoryId}
+                  onChange={(e) => setSubcategoryId(e.target.value)}
+                  className="w-full sm:max-w-md px-2.5 py-1 bg-slate-900 border border-sky-600/50 rounded text-slate-200 text-xs focus:outline-none font-medium"
+                >
+                  <option value="">Selecione o módulo para abater o percentual</option>
+                  {selectedTrackObj.subcategories.map((sub, sIdx) => (
+                    <option key={sub.id} value={sub.id}>
+                      {sIdx + 1}. {sub.title} ({sub.completedPercent || 0}% · {sub.hoursSpent || 0}h / {sub.estimatedHours || 10}h)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedSubObj && (
+                <div className="text-[11px] font-mono text-slate-300 shrink-0">
+                  Total Módulo: <strong className="text-white">{selectedSubObj.estimatedHours || 10}h</strong> · Concluído: <strong className="text-emerald-400">{selectedSubObj.completedPercent || 0}%</strong>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Quick Preset Chips & Live Calculation Callout */}
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg bg-slate-950/70 border border-slate-800/80">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
+                Atalhos:
+              </span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase">Horas:</span>
+              {[0.5, 1, 1.5, 2, 3].map((h) => (
+                <button
+                  key={h}
+                  type="button"
+                  onClick={() => setStudyHours(h)}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold cursor-pointer transition ${
+                    studyHours === h
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-900 border border-slate-800 text-slate-300 hover:border-emerald-500/50 hover:text-emerald-300'
+                  }`}
+                >
+                  +{h}h
+                </button>
+              ))}
+
+              <span className="text-[10px] text-slate-500 font-bold uppercase ml-2">% Módulo:</span>
+              {[10, 20, 25, 50, 100].map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setStudyPercent(p)}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold cursor-pointer transition ${
+                    studyPercent === p
+                      ? 'bg-sky-600 text-white'
+                      : 'bg-slate-900 border border-slate-800 text-slate-300 hover:border-sky-500/50 hover:text-sky-300'
+                  }`}
+                >
+                  +{p}%
+                </button>
+              ))}
+            </div>
+
+            {/* Live calculation info pill for Module */}
+            {selectedSubObj && (typeof studyPercent === 'number' || typeof studyHours === 'number') && (
+              <div className="text-[11px] font-mono text-emerald-300 flex items-center gap-1">
+                <span>
+                  💡 Abate no módulo "{selectedSubObj.title.split(':')[0]}":{' '}
+                  <strong className="text-white">
+                    +{typeof studyPercent === 'number' ? studyPercent : Math.round(((Number(studyHours) || 0) / (selectedSubObj.estimatedHours || 10)) * 100)}%
+                  </strong>{' '}
+                  (Novo progresso: {Math.min(100, (selectedSubObj.completedPercent || 0) + (typeof studyPercent === 'number' ? studyPercent : Math.round(((Number(studyHours) || 0) / (selectedSubObj.estimatedHours || 10)) * 100)))}%)
+                </span>
+              </div>
+            )}
+
+            {/* Live calculation info pill for Certification */}
+            {selectedCert && typeof studyHours === 'number' && studyHours > 0 && (
+              <div className="text-[11px] font-mono text-emerald-300 flex items-center gap-1">
+                <span>
+                  💡 Abate na meta de {selectedCert.code}: {selectedCert.hoursSpent}h + {studyHours}h ={' '}
+                  <strong className="text-white">
+                    {Number(((selectedCert.hoursSpent || 0) + studyHours).toFixed(1))}h
+                  </strong>{' '}
+                  / {selectedCert.estimatedHours}h (
+                  {Math.min(
+                    100,
+                    Math.round((((selectedCert.hoursSpent || 0) + studyHours) / selectedCert.estimatedHours) * 100)
+                  )}
+                  %)
+                </span>
+              </div>
+            )}
           </div>
 
           <div>
@@ -463,10 +691,31 @@ export const NotesView: React.FC<NotesViewProps> = ({
               return (
                 <div key={note.id} className="box-3d p-4 flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1.5">
-                      <span className="font-mono text-sky-400 font-bold px-2 py-0.5 rounded bg-sky-950/60 border border-sky-800/40">
-                        {cert?.code || 'Geral'}
-                      </span>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1.5 flex-wrap gap-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-mono text-sky-400 font-bold px-2 py-0.5 rounded bg-sky-950/60 border border-sky-800/40">
+                          {cert?.code || note.trackTitle || 'Geral'}
+                        </span>
+                        {note.subcategoryTitle && (
+                          <span
+                            className="font-mono text-purple-300 font-medium px-2 py-0.5 rounded bg-purple-950/60 border border-purple-800/40 text-[10px] truncate max-w-[170px]"
+                            title={note.subcategoryTitle}
+                          >
+                            {note.subcategoryTitle.split(':')[0]}
+                          </span>
+                        )}
+                        {note.studyHours && note.studyHours > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-950/70 border border-emerald-600/40 text-emerald-300 font-mono text-[10px] font-bold">
+                            <Clock className="w-2.5 h-2.5 text-emerald-400" />
+                            {note.studyHours}h
+                          </span>
+                        ) : null}
+                        {note.studyPercent && note.studyPercent > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-950/70 border border-sky-600/40 text-sky-300 font-mono text-[10px] font-bold">
+                            +{note.studyPercent}% módulo
+                          </span>
+                        ) : null}
+                      </div>
                       <span className="font-mono text-slate-500">
                         {new Date(note.createdAt).toLocaleDateString('pt-BR')}
                       </span>
