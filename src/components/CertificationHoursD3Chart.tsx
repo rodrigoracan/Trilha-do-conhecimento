@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
-import { Certification } from '../types';
+import { Certification, StudyNote } from '../types';
 import {
   BarChart3,
   Clock,
@@ -15,6 +15,7 @@ import {
 
 interface CertificationHoursD3ChartProps {
   certifications: Certification[];
+  notes?: StudyNote[];
   onClose?: () => void;
   theme?: 'light' | 'dark';
 }
@@ -24,6 +25,7 @@ type ChartMode = 'grouped' | 'bullet';
 
 export const CertificationHoursD3Chart: React.FC<CertificationHoursD3ChartProps> = ({
   certifications,
+  notes = [],
   onClose,
   theme = 'light',
 }) => {
@@ -55,7 +57,23 @@ export const CertificationHoursD3Chart: React.FC<CertificationHoursD3ChartProps>
 
   // Filter & Sort certifications
   const processedData = useMemo(() => {
-    let data = certifications.filter((c) =>
+    let data = certifications.map((c) => {
+      const cNotes = (notes || []).filter((n) => {
+        if (n.certificationId && (n.certificationId === c.id || n.certificationId === c.code)) return true;
+        if (n.trackTitle && (
+          n.trackTitle.toLowerCase() === c.title.toLowerCase() ||
+          n.trackTitle.toLowerCase() === c.code.toLowerCase() ||
+          n.trackTitle.toLowerCase().includes(c.code.toLowerCase())
+        )) return true;
+        return false;
+      });
+      const nHours = cNotes.reduce((sum, n) => sum + (Number(n.studyHours) || 0), 0);
+      const effectiveHours = Math.max(c.hoursSpent || 0, nHours);
+      return {
+        ...c,
+        hoursSpent: effectiveHours,
+      };
+    }).filter((c) =>
       selectedCategory === 'Todas' ? true : c.category === selectedCategory
     );
 

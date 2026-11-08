@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   KnowledgeTrack,
   Certification,
+  StudyNote,
 } from '../types';
 import {
   MoreVertical,
@@ -16,6 +17,7 @@ import {
 interface TracksHubViewProps {
   tracks: KnowledgeTrack[];
   certifications: Certification[];
+  notes?: StudyNote[];
   onOpenTrack: (track: KnowledgeTrack) => void;
   onOpenCertifications: () => void;
   onOpenCreateTrackModal: () => void;
@@ -28,6 +30,7 @@ interface TracksHubViewProps {
 export const TracksHubView: React.FC<TracksHubViewProps> = ({
   tracks,
   certifications,
+  notes = [],
   onOpenTrack,
   onOpenCertifications,
   onOpenCreateTrackModal,
@@ -115,23 +118,76 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
             });
           }
 
-          // Compute realistic evolution percentage factoring completedPercent, items, and workload
+          // Compute realistic evolution percentage factoring completedPercent, items, workload, and notes
           let progressPercentage = 0;
           if (isCertHub) {
-            progressPercentage = totalItemsCount > 0
-              ? Math.round((completedItemsCount / totalItemsCount) * 100)
-              : 0;
+            if (certifications.length > 0) {
+              const certsProgressSum = certifications.reduce((acc, c) => {
+                const cNotes = notes.filter((n) => {
+                  if (n.certificationId && (n.certificationId === c.id || n.certificationId === c.code)) return true;
+                  if (n.trackId && (n.trackId === c.id || n.trackId === c.code)) return true;
+                  const certCodeLower = (c.code || '').toLowerCase();
+                  const certTitleLower = (c.title || '').toLowerCase();
+                  if (n.trackTitle) {
+                    const tLower = n.trackTitle.toLowerCase();
+                    if (tLower === certTitleLower || tLower === certCodeLower || tLower.includes(certCodeLower) || certTitleLower.includes(tLower)) return true;
+                  }
+                  if (n.subcategoryTitle) {
+                    const subLower = n.subcategoryTitle.toLowerCase();
+                    if (subLower === certTitleLower || subLower === certCodeLower || subLower.includes(certCodeLower)) return true;
+                  }
+                  if (n.title) {
+                    const titleLower = n.title.toLowerCase();
+                    if (titleLower.includes(certCodeLower) || titleLower.includes(certTitleLower)) return true;
+                  }
+                  return false;
+                });
+                const nHours = cNotes.reduce((sum, n) => sum + (Number(n.studyHours) || 0), 0);
+                const nPct = cNotes.reduce((sum, n) => sum + (Number(n.studyPercent) || 0), 0);
+                const effHours = Math.max(c.hoursSpent || 0, nHours);
+                const hPct = c.estimatedHours > 0 ? Math.round((effHours / c.estimatedHours) * 100) : 0;
+                const tMods = c.modules.length;
+                const cMods = c.modules.filter((m) => m.completed).length;
+                const mPct = tMods > 0 ? Math.round((cMods / tMods) * 100) : 0;
+                const sList = c.simulados || [];
+                const sPassed = sList.some((s) => s.passed);
+                const sBest = sList.reduce((best, s) => Math.max(best, s.scorePercentage), 0);
+
+                let cProg = 0;
+                if (c.status === 'Concluída') cProg = 100;
+                else if (tMods > 0) cProg = Math.max(mPct, hPct, nPct);
+                else cProg = Math.max(hPct, nPct);
+
+                if (sPassed && cProg < 85) cProg = 85;
+                else if (sBest > cProg) cProg = Math.min(100, sBest);
+
+                return acc + Math.min(100, Math.max(0, cProg));
+              }, 0);
+              progressPercentage = Math.min(100, Math.round(certsProgressSum / certifications.length));
+            } else {
+              progressPercentage = 0;
+            }
           } else if (subcategoriesCount > 0) {
             const sumPercents = (track.subcategories || []).reduce((acc, sub) => {
               const subItems = sub.items?.length || 0;
               const subDone = sub.items?.filter((i) => i.status === 'Concluído').length || 0;
               const itemsPct = subItems > 0 ? Math.round((subDone / subItems) * 100) : 0;
+
+              // Check notes for this module
+              const subNotes = notes.filter((n) =>
+                (n.trackId === track.id || n.trackTitle === track.title) &&
+                (n.subcategoryId === sub.id || n.subcategoryTitle === sub.title)
+              );
+              const subNotesHours = subNotes.reduce((s, n) => s + (Number(n.studyHours) || 0), 0);
+              const subNotesPct = subNotes.reduce((s, n) => s + (Number(n.studyPercent) || 0), 0);
+              const effSubHours = Math.max(sub.hoursSpent || 0, subNotesHours);
+
               const hoursPct = sub.estimatedHours && sub.estimatedHours > 0
-                ? Math.round(((sub.hoursSpent || 0) / sub.estimatedHours) * 100)
+                ? Math.round((effSubHours / sub.estimatedHours) * 100)
                 : 0;
               const modPercent = Math.min(
                 100,
-                Math.max(sub.completedPercent || 0, hoursPct, itemsPct)
+                Math.max(sub.completedPercent || 0, hoursPct, itemsPct, subNotesPct)
               );
               return acc + modPercent;
             }, 0);

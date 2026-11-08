@@ -1212,6 +1212,7 @@ export default function App() {
                 <TracksHubView
                   tracks={database.knowledgeTracks || []}
                   certifications={database.certifications}
+                  notes={database.notes}
                   onOpenTrack={handleOpenTrack}
                   onOpenCertifications={handleOpenCertifications}
                   onOpenCreateTrackModal={() => {
@@ -1267,6 +1268,7 @@ export default function App() {
             {activeTab === 'certs' && (
               <CertificationsView
                 certifications={database.certifications}
+                notes={database.notes}
                 onBackToTracks={handleBackToTracks}
                 onUpdateCert={handleUpdateCert}
                 onDeleteCert={handleDeleteCert}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Certification, CategoryType, CertStatus, ExternalResource, ColorThemeType } from '../types';
+import { Certification, CategoryType, CertStatus, ExternalResource, ColorThemeType, StudyNote, Simulado } from '../types';
 import { downloadFile, deleteFileFromIndexedDB } from '../utils/indexedDB';
 import {
   Plus,
@@ -23,12 +23,14 @@ import {
   BarChart3,
   Clock,
   X,
-  Edit2
+  Edit2,
+  Award
 } from 'lucide-react';
 import { CertificationHoursD3Chart } from './CertificationHoursD3Chart';
 
 interface CertificationsViewProps {
   certifications: Certification[];
+  notes?: StudyNote[];
   onUpdateCert: (cert: Certification) => void;
   onDeleteCert: (id: string) => void;
   onOpenCreateModal: () => void;
@@ -45,6 +47,7 @@ const PALETTE_FALLBACKS = ['sky', 'emerald', 'purple', 'amber', 'rose', 'teal', 
 
 export const CertificationsView: React.FC<CertificationsViewProps> = ({
   certifications,
+  notes = [],
   onUpdateCert,
   onDeleteCert,
   onOpenCreateModal,
@@ -360,6 +363,7 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
       {showHoursChart && (
         <CertificationHoursD3Chart
           certifications={certifications}
+          notes={notes}
           onClose={() => setShowHoursChart(false)}
           theme={theme}
         />
@@ -372,10 +376,69 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
             cert.colorTheme || PALETTE_FALLBACKS[index % PALETTE_FALLBACKS.length];
           const cardTheme = getCardThemeStyles(themeKey);
 
+          // Get all notes linked to this certification
+          const certNotes = notes.filter((n) => {
+            if (n.certificationId && (n.certificationId === cert.id || n.certificationId === cert.code)) return true;
+            if (n.trackId && (n.trackId === cert.id || n.trackId === cert.code)) return true;
+            const certCodeLower = (cert.code || '').toLowerCase();
+            const certTitleLower = (cert.title || '').toLowerCase();
+            if (n.trackTitle) {
+              const tLower = n.trackTitle.toLowerCase();
+              if (tLower === certTitleLower || tLower === certCodeLower || tLower.includes(certCodeLower) || certTitleLower.includes(tLower)) return true;
+            }
+            if (n.subcategoryTitle) {
+              const subLower = n.subcategoryTitle.toLowerCase();
+              if (subLower === certTitleLower || subLower === certCodeLower || subLower.includes(certCodeLower)) return true;
+            }
+            if (n.title) {
+              const titleLower = n.title.toLowerCase();
+              if (titleLower.includes(certCodeLower) || titleLower.includes(certTitleLower)) return true;
+            }
+            return false;
+          });
+
+          const notesHours = certNotes.reduce((acc, n) => acc + (Number(n.studyHours) || 0), 0);
+          const notesPercent = certNotes.reduce((acc, n) => acc + (Number(n.studyPercent) || 0), 0);
+
+          // Effective hours spent: manual cert hoursSpent or logged in notes
+          const effectiveHours = Math.max(cert.hoursSpent || 0, notesHours);
+          const hoursPct = cert.estimatedHours > 0
+            ? Math.round((effectiveHours / cert.estimatedHours) * 100)
+            : 0;
+
           const totalModules = cert.modules.length;
           const completedModules = cert.modules.filter((m) => m.completed).length;
-          const progressPercent =
-            totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+          const modulesPct = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+
+          const simuladosList = cert.simulados || [];
+          const totalSimulados = simuladosList.length;
+          const passedSimulados = simuladosList.filter((s) => s.passed).length;
+          const bestSimulado = simuladosList.reduce<Simulado | null>((best, s) => {
+            if (!best || s.scorePercentage > best.scorePercentage) return s;
+            return best;
+          }, null);
+
+          // Unified progress calculation:
+          let calculatedProgress = 0;
+          if (cert.status === 'Concluída') {
+            calculatedProgress = 100;
+          } else if (totalModules > 0) {
+            calculatedProgress = Math.max(modulesPct, hoursPct, notesPercent);
+          } else {
+            // When no submodules are defined, progress derives directly from hours and note percentages
+            calculatedProgress = Math.max(hoursPct, notesPercent);
+          }
+
+          // Simulados boost: if passed or completed with score
+          if (totalSimulados > 0) {
+            if (passedSimulados > 0 && calculatedProgress < 85) {
+              calculatedProgress = Math.max(calculatedProgress, 85);
+            } else if (bestSimulado && bestSimulado.scorePercentage > calculatedProgress) {
+              calculatedProgress = Math.max(calculatedProgress, Math.min(100, bestSimulado.scorePercentage));
+            }
+          }
+
+          const progressPercent = Math.min(100, Math.max(0, calculatedProgress));
           const isExpanded = expandedModules[cert.id] ?? false;
 
           return (
@@ -442,8 +505,16 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                 {/* Progress Bar & Quick Hours Adjustment */}
                 <div className={`mt-4 pt-3 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
                   <div className={`flex items-center justify-between text-xs mb-1.5 font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-                    <span>
-                      Progresso: <strong className={`font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>{progressPercent}%</strong>
+                    <span className="flex items-center gap-1.5">
+                      <span>Progresso:</span>
+                      <strong className={`font-mono text-sm ${progressPercent >= 100 ? 'text-[#00F0FF]' : isLight ? 'text-slate-900' : 'text-white'}`}>
+                        {progressPercent}%
+                      </strong>
+                      {progressPercent >= 100 && (
+                        <span className="text-[10px] font-mono px-1.5 py-0.2 border bg-[#00F0FF]/10 text-[#00F0FF] border-[#00F0FF]/40 uppercase tracking-wider font-bold">
+                          CONCLUÍDO
+                        </span>
+                      )}
                     </span>
                     <button
                       type="button"
@@ -451,27 +522,142 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                       className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border transition flex items-center gap-1 cursor-pointer ${
                         isLight
                           ? 'bg-white hover:bg-sky-50 text-sky-900 border-sky-300 shadow-2xs hover:border-sky-500'
-                          : 'bg-slate-950/80 hover:bg-slate-900 text-sky-300 border-sky-500/40 hover:border-sky-400'
+                          : 'bg-[#0C0C0E] hover:bg-[#141417] text-[#00F0FF] border-[#00F0FF]/40 hover:border-[#00F0FF]'
                       }`}
                       title="Clique para ajustar a carga horária total e horas estudadas"
                     >
-                      <Clock className="w-3 h-3 text-sky-500 shrink-0" />
-                      <span>{cert.hoursSpent}h / {cert.estimatedHours}h</span>
+                      <Clock className="w-3 h-3 text-[#00F0FF] shrink-0" />
+                      <span>{effectiveHours}h / {cert.estimatedHours}h</span>
                       <Edit2 className="w-2.5 h-2.5 text-slate-400 opacity-80" />
                     </button>
                   </div>
                   <div className={`w-full h-2 rounded-full overflow-hidden border shadow-inner ${
-                    isLight ? 'bg-slate-200/90 border-slate-300/60' : 'bg-slate-950/90 border-slate-800/80'
+                    isLight ? 'bg-slate-200/90 border-slate-300/60' : 'bg-[#0C0C0E] border-[#00F0FF]/30'
                   }`}>
                     <div
-                      className={`h-full ${cardTheme.progressBg} rounded-full transition-all duration-300`}
-                      style={{ width: `${progressPercent}%` }}
+                      className={`h-full transition-all duration-300 ${
+                        isLight
+                          ? cardTheme.progressBg
+                          : 'bg-[#00F0FF] shadow-[0_0_8px_rgba(0,240,255,0.8)]'
+                      }`}
+                      style={{ width: `${Math.max(progressPercent > 0 ? 2 : 0, progressPercent)}%` }}
                     />
                   </div>
                 </div>
 
+                {/* Anotações Registradas (Parte Externa do Quadro) */}
+                <div className={`mt-3 pt-2.5 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className={`text-[11px] font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-800' : 'text-white/90'}`}>
+                      <FileText className="w-3.5 h-3.5 text-[#00F0FF]" />
+                      Anotações ({certNotes.length})
+                      {notesHours > 0 && (
+                        <span className="text-[10px] text-[#00F0FF] bg-[#00F0FF]/10 px-1.5 py-0.2 border border-[#00F0FF]/30">
+                          {notesHours}h computadas
+                        </span>
+                      )}
+                      {notesPercent > 0 && (
+                        <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 border border-emerald-500/30">
+                          +{notesPercent}% abatido
+                        </span>
+                      )}
+                    </span>
+                    {onOpenNotesForCert && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenNotesForCert(cert)}
+                        className={`text-[11px] font-bold cursor-pointer hover:underline flex items-center gap-0.5 ${
+                          isLight ? 'text-sky-600' : 'text-[#00F0FF]'
+                        }`}
+                      >
+                        {certNotes.length > 0 ? 'Abrir →' : '+ Anotar'}
+                      </button>
+                    )}
+                  </div>
+
+                  {certNotes.length > 0 && (
+                    <div className="space-y-1 mt-1.5">
+                      {certNotes.slice(0, 2).map((note) => (
+                        <div
+                          key={note.id}
+                          onClick={() => onOpenNotesForCert && onOpenNotesForCert(cert)}
+                          className={`p-1.5 border text-[11px] font-mono cursor-pointer transition flex items-center justify-between ${
+                            isLight
+                              ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+                              : 'bg-[#0C0C0E]/80 hover:bg-[#141417] border-[#00F0FF]/20 text-white/80 hover:border-[#00F0FF]'
+                          }`}
+                          title={`Clique para abrir esta anotação: ${note.title}`}
+                        >
+                          <span className="truncate flex-1">{note.title}</span>
+                          {(note.studyHours || note.studyPercent) && (
+                            <span className="text-[10px] text-[#00F0FF] shrink-0 ml-2 font-bold">
+                              {note.studyHours ? `${note.studyHours}h` : ''} {note.studyPercent ? `(${note.studyPercent}%)` : ''}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                      {certNotes.length > 2 && (
+                        <div className="text-[10px] font-mono text-white/40 text-right">
+                          +{certNotes.length - 2} anotações arquivadas
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Simulados Realizados (Parte Externa do Quadro) */}
+                <div className={`mt-3 pt-2.5 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className={`text-[11px] font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-800' : 'text-white/90'}`}>
+                      <FileCheck className="w-3.5 h-3.5 text-amber-400" />
+                      Simulados ({totalSimulados})
+                      {totalSimulados > 0 && bestSimulado && (
+                        <span className={`text-[10px] px-1.5 py-0.2 border ${
+                          bestSimulado.passed
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                            : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+                        }`}>
+                          Melhor: {bestSimulado.scorePercentage}% {bestSimulado.passed ? '✓ Aprovado' : ''}
+                        </span>
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onOpenSimuladosForCert(cert)}
+                      className="text-[11px] font-bold text-amber-400 hover:underline cursor-pointer flex items-center gap-0.5"
+                    >
+                      {totalSimulados > 0 ? 'Ver Simulados →' : '+ Fazer Simulado'}
+                    </button>
+                  </div>
+
+                  {totalSimulados > 0 && (
+                    <div className="space-y-1 mt-1.5">
+                      {simuladosList.slice(0, 2).map((sim) => (
+                        <div
+                          key={sim.id}
+                          onClick={() => onOpenSimuladosForCert(cert)}
+                          className={`p-1.5 border text-[11px] font-mono cursor-pointer transition flex items-center justify-between ${
+                            isLight
+                              ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+                              : 'bg-[#0C0C0E]/80 hover:bg-[#141417] border-[#00F0FF]/20 text-white/80 hover:border-[#00F0FF]'
+                          }`}
+                        >
+                          <span className="truncate flex-1">{sim.title}</span>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.2 border shrink-0 ml-2 ${
+                            sim.passed
+                              ? 'text-emerald-400 border-emerald-500/40 bg-emerald-950/30'
+                              : 'text-amber-300 border-amber-500/40 bg-amber-950/30'
+                          }`}>
+                            {sim.scorePercentage}% ({sim.correctAnswers}/{sim.totalQuestions})
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* Modules & Topics (Collapsible) */}
-                <div className={`mt-4 pt-2.5 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
+                <div className={`mt-3.5 pt-2.5 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
                   <button
                     onClick={() => toggleModuleExpansion(cert.id)}
                     className={`w-full flex items-center justify-between text-xs font-semibold py-1 transition cursor-pointer font-mono ${
@@ -612,31 +798,39 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => onOpenSimuladosForCert(cert)}
-                    className="btn-3d-amber px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-xs"
+                    className={`px-2.5 py-1 text-xs font-mono font-semibold flex items-center gap-1 cursor-pointer transition border ${
+                      isLight
+                        ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300 shadow-2xs'
+                        : 'bg-[#141417] hover:bg-[#1a1a20] text-amber-400 border-amber-400/40 hover:border-amber-400 shadow-xs'
+                    }`}
                     title="Adicionar e gerenciar Simulados desta certificação"
                   >
-                    <FileCheck className="w-3.5 h-3.5 text-amber-200" />
-                    Simulados
+                    <FileCheck className="w-3.5 h-3.5 text-amber-400" />
+                    Simulados ({totalSimulados})
                   </button>
                   <button
                     onClick={() => onStartFeynmanForCert(cert)}
-                    className="btn-3d-purple px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-xs"
+                    className={`px-2.5 py-1 text-xs font-mono font-semibold flex items-center gap-1 cursor-pointer transition border ${
+                      isLight
+                        ? 'bg-purple-50 hover:bg-purple-100 text-purple-900 border-purple-300 shadow-2xs'
+                        : 'bg-[#141417] hover:bg-[#1a1a20] text-purple-300 border-purple-400/40 hover:border-purple-400 shadow-xs'
+                    }`}
                   >
-                    <Sparkles className="w-3 h-3" />
+                    <Sparkles className="w-3 h-3 text-purple-400" />
                     Feynman
                   </button>
                   {onOpenNotesForCert && (
                     <button
                       onClick={() => onOpenNotesForCert(cert)}
-                      className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer transition ${
+                      className={`px-2.5 py-1 text-xs font-mono font-semibold flex items-center gap-1 cursor-pointer transition border ${
                         isLight
-                          ? 'bg-white hover:bg-sky-50 text-slate-800 border border-slate-300 shadow-2xs'
-                          : 'btn-3d-dark text-slate-300 hover:text-white'
+                          ? 'bg-white hover:bg-sky-50 text-slate-800 border-slate-300 shadow-2xs'
+                          : 'bg-[#141417] hover:bg-[#1a1a20] text-[#00F0FF] border-[#00F0FF]/40 hover:border-[#00F0FF] shadow-xs'
                       }`}
                       title="Abrir anotações no Bloco de Notas"
                     >
-                      <FileText className="w-3 h-3 text-sky-500" />
-                      Anotar
+                      <FileText className="w-3 h-3 text-[#00F0FF]" />
+                      Anotar ({certNotes.length})
                     </button>
                   )}
                 </div>
@@ -644,10 +838,10 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => onOpenEditModal(cert)}
-                    className={`px-2 py-1 rounded cursor-pointer transition ${
+                    className={`px-2 py-1 text-xs font-mono rounded cursor-pointer transition border ${
                       isLight
-                        ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                        ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 border-transparent'
+                        : 'text-white/60 hover:text-white hover:bg-white/5 border-white/10 hover:border-white/20'
                     }`}
                   >
                     Editar
@@ -658,10 +852,10 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                         onDeleteCert(cert.id);
                       }
                     }}
-                    className={`px-2 py-1 rounded cursor-pointer transition ${
+                    className={`px-2 py-1 text-xs font-mono rounded cursor-pointer transition border ${
                       isLight
-                        ? 'text-rose-600 hover:text-rose-800 hover:bg-rose-100/60'
-                        : 'text-slate-500 hover:text-rose-400 hover:bg-rose-950/40'
+                        ? 'text-rose-600 hover:text-rose-800 hover:bg-rose-100/60 border-transparent'
+                        : 'text-rose-400/70 hover:text-rose-400 hover:bg-rose-950/30 border-rose-900/30'
                     }`}
                     title="Excluir esta trilha"
                   >
