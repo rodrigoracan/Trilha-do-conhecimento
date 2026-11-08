@@ -378,18 +378,24 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
           return (
             <div
               key={cert.id}
-              className={`rounded-2xl ${cardTheme.cardBg} p-5 flex flex-col justify-between select-none transition-all duration-200 hover:-translate-y-1`}
+              className={`p-5 flex flex-col justify-between select-none transition-all duration-200 ${
+                isLight
+                  ? `rounded-2xl ${cardTheme.cardBg} hover:-translate-y-1`
+                  : 'technical-card border-[1.5px] border-[#00F0FF]/35 hover:border-[#00F0FF] shadow-[0_4px_24px_rgba(0,0,0,0.6)]'
+              }`}
             >
               <div>
                 {/* Header: Initial Code Badge & Gate */}
-                <div className="flex items-center justify-between gap-2 text-xs mb-3">
+                <div className={`flex items-center justify-between gap-2 text-xs mb-3 font-mono pb-2.5 border-b ${
+                  isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'
+                }`}>
                   <div className="flex items-center gap-2">
                     <span
                       className={`text-sm font-black font-mono px-2.5 py-1 rounded-md border ${cardTheme.badgeClass}`}
                     >
                       {cert.code}
                     </span>
-                    <span className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                    <span className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                       {cert.targetGate}
                     </span>
                   </div>
@@ -397,10 +403,10 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                   <select
                     value={cert.status}
                     onChange={(e) => handleStatusChange(cert, e.target.value as CertStatus)}
-                    className={`text-[11px] font-semibold px-2 py-0.5 rounded cursor-pointer focus:outline-none border ${
+                    className={`text-[11px] font-mono font-semibold px-2 py-0.5 cursor-pointer focus:outline-none border ${
                       isLight
-                        ? 'bg-white border-slate-300 text-slate-800'
-                        : 'bg-slate-950/90 border-slate-700/60 text-slate-300'
+                        ? 'bg-white border-slate-300 text-slate-800 rounded'
+                        : 'bg-[#0C0C0E] border-[#00F0FF]/30 text-[#00F0FF] focus:border-[#00F0FF]'
                     }`}
                   >
                     <option value="Planejada">Planejada</option>
@@ -410,11 +416,11 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                 </div>
 
                 {/* Title */}
-                <h3 className={`text-base font-bold ${cardTheme.titleColor} tracking-tight leading-snug`}>
+                <h3 className={`text-base font-bold ${cardTheme.titleColor} tracking-tight leading-snug font-['Syne',sans-serif]`}>
                   {cert.title}
                 </h3>
 
-                <div className={`text-xs mt-1 flex items-center gap-2 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                <div className={`text-xs mt-1 flex items-center gap-2 font-medium font-mono ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                   <span>{cert.issuer}</span>
                   {cert.officialUrl && (
                     <a
@@ -422,7 +428,7 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                       target="_blank"
                       rel="noreferrer"
                       className={`flex items-center gap-0.5 text-[11px] ml-auto ${
-                        isLight ? 'text-sky-700 hover:text-sky-900' : 'text-slate-400 hover:text-white'
+                        isLight ? 'text-sky-700 hover:text-sky-900' : 'text-[#00F0FF] hover:underline'
                       }`}
                     >
                       Oficial <ExternalLink className="w-2.5 h-2.5" />
@@ -431,7 +437,7 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                 </div>
 
                 {/* Progress Bar & Quick Hours Adjustment */}
-                <div className={`mt-4 pt-3 border-t ${isLight ? 'border-slate-200/90' : 'border-slate-800/80'}`}>
+                <div className={`mt-4 pt-3 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
                   <div className={`flex items-center justify-between text-xs mb-1.5 font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
                     <span>
                       Progresso: <strong className={`font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>{progressPercent}%</strong>
@@ -462,11 +468,11 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                 </div>
 
                 {/* Modules & Topics (Collapsible) */}
-                <div className={`mt-4 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-slate-800/80'}`}>
+                <div className={`mt-4 pt-2.5 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
                   <button
                     onClick={() => toggleModuleExpansion(cert.id)}
-                    className={`w-full flex items-center justify-between text-xs font-semibold py-1 transition cursor-pointer ${
-                      isLight ? 'text-slate-800 hover:text-sky-800' : 'text-slate-300 hover:text-white'
+                    className={`w-full flex items-center justify-between text-xs font-semibold py-1 transition cursor-pointer font-mono ${
+                      isLight ? 'text-slate-800 hover:text-sky-800' : 'text-white/80 hover:text-[#00F0FF]'
                     }`}
                   >
                     <span className="flex items-center gap-1.5">
@@ -474,9 +480,9 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                       Conteúdos ({completedModules}/{cert.modules.length})
                     </span>
                     {isExpanded ? (
-                      <ChevronUp className={`w-3.5 h-3.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`} />
+                      <ChevronUp className={`w-3.5 h-3.5 ${isLight ? 'text-slate-600' : 'text-white/40'}`} />
                     ) : (
-                      <ChevronDown className={`w-3.5 h-3.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`} />
+                      <ChevronDown className={`w-3.5 h-3.5 ${isLight ? 'text-slate-600' : 'text-white/40'}`} />
                     )}
                   </button>
 
@@ -486,29 +492,29 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                         <div
                           key={module.id}
                           onClick={() => toggleModuleCompletion(cert, module.id)}
-                          className={`p-2 rounded-lg border text-xs cursor-pointer transition flex items-start gap-2 ${
+                          className={`p-2 border text-xs font-mono cursor-pointer transition flex items-start gap-2 ${
                             module.completed
                               ? isLight
-                                ? 'bg-slate-100/70 border-slate-200 text-slate-400'
-                                : 'bg-slate-950/40 border-slate-800/50 text-slate-500'
+                                ? 'bg-slate-100/70 border-slate-200 text-slate-400 rounded-lg'
+                                : 'bg-[#0C0C0E]/70 border-[#00F0FF]/15 text-white/30 line-through'
                               : isLight
-                              ? 'bg-white/90 border-slate-200 text-slate-800 hover:border-sky-300 shadow-2xs'
-                              : 'bg-slate-950/80 border-slate-800/90 text-slate-200 hover:border-slate-700'
+                              ? 'bg-white/90 border-slate-200 text-slate-800 hover:border-sky-300 shadow-2xs rounded-lg'
+                              : 'bg-[#0C0C0E] border-[#00F0FF]/25 text-white/90 hover:border-[#00F0FF]'
                           }`}
                         >
                           <div className="mt-0.5 shrink-0">
                             {module.completed ? (
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                             ) : (
-                              <Circle className={`w-3.5 h-3.5 ${isLight ? 'text-slate-400' : 'text-slate-500'}`} />
+                              <Circle className={`w-3.5 h-3.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`} />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className={module.completed ? 'line-through text-slate-400' : 'font-medium'}>
+                            <div className={module.completed ? 'line-through text-white/30' : 'font-medium'}>
                               {module.title}
                             </div>
                             {module.description && (
-                              <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                              <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
                                 {module.description}
                               </div>
                             )}
@@ -520,15 +526,17 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
                 </div>
 
                 {/* External Materials Section */}
-                <div className={`mt-3 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-slate-800/80'}`}>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className={`text-[11px] font-medium flex items-center gap-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                      <FolderOpen className="w-3 h-3" />
+                <div className={`mt-3.5 pt-2.5 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
+                  <div className="flex items-center justify-between text-xs mb-1 font-mono">
+                    <span className={`text-[11px] font-medium flex items-center gap-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                      <FolderOpen className="w-3 h-3 text-[#00F0FF]" />
                       Arquivos & Links Salvos ({cert.externalResources.length})
                     </span>
                     <button
                       onClick={() => onOpenAddResourceModal(cert)}
-                      className="text-[11px] text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-0.5 cursor-pointer font-medium"
+                      className={`text-[11px] hover:underline flex items-center gap-0.5 cursor-pointer font-bold ${
+                        isLight ? 'text-sky-600' : 'text-[#00F0FF]'
+                      }`}
                     >
                       <Plus className="w-3 h-3" /> Anexar
                     </button>
@@ -595,8 +603,8 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
               </div>
 
               {/* Card Footer Actions */}
-              <div className={`mt-4 pt-3 border-t flex items-center justify-between gap-1.5 text-xs ${
-                isLight ? 'border-slate-200/90' : 'border-slate-800/80'
+              <div className={`mt-4 pt-3 border-t-[1.5px] flex items-center justify-between gap-1.5 text-xs font-mono ${
+                isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'
               }`}>
                 <div className="flex items-center gap-1.5">
                   <button

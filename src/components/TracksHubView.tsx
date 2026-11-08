@@ -133,11 +133,11 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
                   onOpenTrack(track);
                 }
               }}
-              className="technical-card p-5 sm:p-6 flex flex-col justify-between cursor-pointer group select-none"
+              className="technical-card p-5 sm:p-6 flex flex-col justify-between cursor-pointer group select-none border-[1.5px] border-[#00F0FF]/35 hover:border-[#00F0FF] shadow-[0_4px_24px_rgba(0,0,0,0.6)]"
             >
               <div>
                 {/* Header: SEC_XX and ID: XX + Options Menu */}
-                <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/10">
+                <div className="flex items-center justify-between mb-4 pb-2.5 border-b-[1.5px] border-[#00F0FF]/25">
                   <div className="flex items-center gap-3">
                     <span className="label-tech text-[#00F0FF] font-bold">{secCode}</span>
                     <span className="label-tech text-white/50">{techId}</span>
@@ -215,7 +215,7 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
                     {track.tags.slice(0, 3).map((tag, tIdx) => (
                       <span
                         key={tIdx}
-                        className="px-2 py-0.5 text-[10px] font-mono bg-white/5 text-white/70 border border-white/10 uppercase tracking-wider"
+                        className="px-2 py-0.5 text-[10px] font-mono bg-[#00F0FF]/5 text-white/80 border border-[#00F0FF]/25 uppercase tracking-wider"
                       >
                         {tag}
                       </span>
@@ -225,7 +225,7 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
               </div>
 
               {/* Progress Bar & Open Button */}
-              <div className="pt-4 border-t border-white/10 space-y-3.5">
+              <div className="pt-4 border-t-[1.5px] border-[#00F0FF]/25 space-y-3.5">
                 {/* Stats line */}
                 <div className="flex items-center justify-between text-xs font-mono text-white/60">
                   <div className="flex items-center gap-3">

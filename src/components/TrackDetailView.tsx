@@ -599,6 +599,44 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
       updatedAt: new Date().toISOString(),
     };
     onSaveNote(newNote);
+
+    // Compute updated hours and percentage abatement for the module
+    const currentHours = quickNoteModalSub.hoursSpent || 0;
+    const newHours = currentHours + hoursNum;
+    const est = quickNoteModalSub.estimatedHours || 40;
+    const currentPercent =
+      quickNoteModalSub.completedPercent !== undefined && quickNoteModalSub.completedPercent !== null
+        ? quickNoteModalSub.completedPercent
+        : est > 0 ? Math.round((currentHours / est) * 100) : 0;
+    const newPercent = Math.min(100, Math.max(0, currentPercent + pctNum));
+    const nextStatus: CertStatus =
+      newPercent >= 100
+        ? 'Concluída'
+        : newPercent > 0 || newHours > 0
+        ? 'Em Andamento'
+        : quickNoteModalSub.status || 'Planejada';
+
+    const updatedSubs = (track.subcategories || []).map((s) =>
+      s.id === quickNoteModalSub.id
+        ? {
+            ...s,
+            hoursSpent: newHours,
+            completedPercent: newPercent,
+            status: nextStatus,
+          }
+        : s
+    );
+
+    onUpdateTrack({
+      ...track,
+      subcategories: updatedSubs,
+      updatedAt: new Date().toISOString(),
+    });
+
+    if (hoursNum > 0 && onLogStudyHours) {
+      onLogStudyHours(hoursNum, track.title);
+    }
+
     setQuickNoteModalSub(null);
   };
 
@@ -645,7 +683,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
           return 'bg-[#edf6ff] border-2 border-sky-400 shadow-md shadow-sky-900/5';
       }
     }
-    return 'technical-card bg-[#141417] border-[1.5px] border-white/10 hover:border-[#00F0FF] shadow-2xl';
+    return 'technical-card bg-[#141417] border-[1.5px] border-[#00F0FF]/35 hover:border-[#00F0FF] shadow-[0_4px_30px_rgba(0,0,0,0.7)]';
   };
 
   // Card theme helper matching CertificationsView layout
@@ -729,7 +767,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
         className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 border-[1.5px] transition-colors ${
           isLight
             ? 'bg-[#e5f0fc] border-[#8cb7ea] shadow-md shadow-sky-900/5'
-            : 'bg-[#141417] border-white/10 shadow-lg'
+            : 'bg-[#141417] border-[#00F0FF]/35 shadow-lg'
         }`}
       >
         <div className="flex items-center gap-2 text-xs sm:text-sm font-mono">
@@ -927,7 +965,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
         </div>
 
         {/* Overall Progress Bar */}
-        <div className="space-y-1.5 pt-2">
+        <div className={`space-y-1.5 pt-3 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
           <div className="flex items-center justify-between text-xs font-mono">
             <span className={`font-semibold flex items-center gap-1.5 ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
               <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-500' : 'text-[#00F0FF]'}`} />
@@ -937,7 +975,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
               {progressPercentage}% CONCLUÍDO · {totalTrackHoursSpent}h de {totalTrackHoursEstimated}h ({completedItemsCount}/{totalItemsCount} tópicos)
             </span>
           </div>
-          <div className={isLight ? 'w-full h-2.5 rounded-full overflow-hidden shadow-inner bg-slate-200' : 'progress-bar-tech h-2'}>
+          <div className={isLight ? 'w-full h-2.5 rounded-full overflow-hidden shadow-inner bg-slate-200' : 'progress-bar-tech h-2 border border-[#00F0FF]/30 bg-[#0C0C0E]'}>
             <div
               className={isLight ? 'h-full bg-gradient-to-r from-sky-500 via-blue-500 to-emerald-500 rounded-full transition-all duration-500' : 'progress-fill-tech h-full'}
               style={{ width: `${progressPercentage}%` }}
@@ -949,7 +987,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
       {/* Switcher: Módulos & Conteúdos vs. Cronograma & Dias de Estudo */}
       <div
         className={`p-1.5 border-[1.5px] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 transition-colors ${
-          isLight ? 'bg-[#dbe9fa] border-[#76a7e8]' : 'bg-[#141417] border-white/10'
+          isLight ? 'bg-[#dbe9fa] border-[#76a7e8]' : 'bg-[#141417] border-[#00F0FF]/35 shadow-lg'
         }`}
       >
         <div className="flex items-center gap-1.5 w-full sm:w-auto font-mono">
@@ -1086,7 +1124,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
             className={`w-full pl-10 pr-4 py-2 text-xs sm:text-sm font-mono transition focus:outline-none ${
               isLight
                 ? 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:border-sky-500 rounded-lg'
-                : 'bg-[#141417] border border-white/10 text-white placeholder-white/30 focus:border-[#00F0FF]'
+                : 'bg-[#141417] border-[1.5px] border-[#00F0FF]/30 text-white placeholder-white/30 focus:border-[#00F0FF]'
             }`}
           />
           {searchQuery && (
@@ -1101,8 +1139,8 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
 
         <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto text-xs font-mono">
           {/* Layout switcher: Quadros (Blocos) vs. Lista Detalhada */}
-          <div className={`flex items-center p-0.5 border ${
-            isLight ? 'bg-slate-100 border-slate-200 rounded-lg' : 'bg-[#141417] border-white/10'
+          <div className={`flex items-center p-0.5 border-[1.5px] ${
+            isLight ? 'bg-slate-100 border-slate-200 rounded-lg' : 'bg-[#141417] border-[#00F0FF]/30'
           }`}>
             <button
               type="button"
@@ -1173,14 +1211,25 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
             const subCompletedItems = subcategory.items?.filter((i) => i.status === 'Concluído').length || 0;
             const subHoursSpent = subcategory.hoursSpent || 0;
             const subEstHours = subcategory.estimatedHours || 40;
-            const subPercent =
-              subcategory.completedPercent !== undefined && subcategory.completedPercent !== null
-                ? subcategory.completedPercent
-                : subTotalItems > 0
-                ? Math.round((subCompletedItems / subTotalItems) * 100)
-                : 0;
-            const attachments = subcategory.attachments || [];
             const moduleNotes = trackNotes.filter((n) => n.subcategoryId === subcategory.id);
+            const notesPercentTotal = moduleNotes.reduce((acc, n) => acc + (n.studyPercent || 0), 0);
+            const notesHoursTotal = moduleNotes.reduce((acc, n) => acc + (n.studyHours || 0), 0);
+            const effectiveHoursSpent = Math.max(subHoursSpent, notesHoursTotal);
+            const hoursBasedPercent = subEstHours > 0 ? Math.round((effectiveHoursSpent / subEstHours) * 100) : 0;
+            const itemsBasedPercent = subTotalItems > 0 ? Math.round((subCompletedItems / subTotalItems) * 100) : 0;
+
+            // Dynamically calculate evolution percentage:
+            // Combines manual completedPercent, hours ratio, sum of notes abatement %, and completed topics
+            const subPercent = Math.min(
+              100,
+              Math.max(
+                subcategory.completedPercent ?? 0,
+                hoursBasedPercent,
+                notesPercentTotal,
+                itemsBasedPercent
+              )
+            );
+            const attachments = subcategory.attachments || [];
             const isTopicsExpanded = expandedGridTopics[subcategory.id] ?? true;
             const isNotesExpanded = expandedGridNotes[subcategory.id] ?? false;
 
@@ -1201,12 +1250,14 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                 className={`p-5 flex flex-col justify-between select-none transition-all duration-200 relative ${
                   isLight
                     ? `rounded-2xl ${cardTheme.cardBg} hover:-translate-y-1`
-                    : 'technical-card border-white/10 hover:border-[#00F0FF]'
+                    : 'technical-card border-[1.5px] border-[#00F0FF]/35 hover:border-[#00F0FF] shadow-[0_4px_24px_rgba(0,0,0,0.6)]'
                 }`}
               >
                 <div>
                   {/* Header: Module Code Badge, Status Selector & Three-dots Menu */}
-                  <div className="flex items-center justify-between gap-2 text-xs mb-3 font-mono">
+                  <div className={`flex items-center justify-between gap-2 text-xs mb-3 font-mono pb-2.5 border-b ${
+                    isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'
+                  }`}>
                     <div className="flex items-center gap-2">
                       <span className={`text-xs font-bold font-mono px-2 py-0.5 border ${
                         isLight ? cardTheme.badgeClass : 'bg-[#0C0C0E] text-[#00F0FF] border-[#00F0FF]/40'
@@ -1322,7 +1373,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                   )}
 
                   {/* Progress Bar & Quick Hours / % Adjustment */}
-                  <div className={`mt-4 pt-3 border-t ${isLight ? 'border-slate-200/90' : 'border-white/10'}`}>
+                  <div className={`mt-4 pt-3 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
                     <div className={`flex items-center justify-between text-xs mb-1.5 font-mono ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
                       <span>
                         PROGRESSO: <strong className={isLight ? 'font-mono text-slate-900' : 'font-mono text-[#00F0FF]'}>{subPercent}%</strong>
@@ -1333,7 +1384,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                         className={`text-[11px] font-mono font-bold px-2 py-0.5 border transition flex items-center gap-1 cursor-pointer ${
                           isLight
                             ? 'bg-white hover:bg-sky-50 text-sky-900 border-sky-300 shadow-2xs hover:border-sky-500 rounded'
-                            : 'bg-[#0C0C0E] hover:border-[#00F0FF] text-[#00F0FF] border-white/10'
+                            : 'bg-[#0C0C0E] hover:border-[#00F0FF] text-[#00F0FF] border-[#00F0FF]/30'
                         }`}
                         title="Clique para ajustar a carga horária total e horas estudadas"
                       >
@@ -1342,16 +1393,16 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                         <Edit2 className="w-2.5 h-2.5 text-white/40" />
                       </button>
                     </div>
-                    <div className={isLight ? 'w-full h-2 rounded-full overflow-hidden border shadow-inner bg-slate-200/90 border-slate-300/60' : 'progress-bar-tech h-1.5'}>
+                    <div className={isLight ? 'w-full h-2 rounded-full overflow-hidden border shadow-inner bg-slate-200/90 border-slate-300/60' : 'progress-bar-tech h-2 border border-[#00F0FF]/30 bg-[#0C0C0E]'}>
                       <div
                         className={isLight ? `h-full ${cardTheme.progressBg} rounded-full transition-all duration-300` : 'progress-fill-tech h-full'}
-                        style={{ width: `${subPercent}%` }}
+                        style={{ width: `${Math.max(subPercent > 0 ? 2 : 0, subPercent)}%` }}
                       />
                     </div>
                   </div>
 
                   {/* Modules & Topics (Collapsible) */}
-                  <div className={`mt-4 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-white/10'}`}>
+                  <div className={`mt-4 pt-2.5 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
                     <div className="flex items-center justify-between text-xs font-semibold py-1">
                       <button
                         type="button"
@@ -1399,10 +1450,10 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                               item.status === 'Concluído'
                                 ? isLight
                                   ? 'bg-slate-100/70 border-slate-200 text-slate-400 rounded-lg'
-                                  : 'bg-[#0C0C0E]/60 border-white/5 text-white/30 line-through'
+                                  : 'bg-[#0C0C0E]/70 border-[#00F0FF]/15 text-white/30 line-through'
                                 : isLight
                                 ? 'bg-white/90 border-slate-200 text-slate-800 hover:border-sky-300 shadow-2xs rounded-lg'
-                                : 'bg-[#0C0C0E] border-white/10 text-white/90 hover:border-[#00F0FF]/50'
+                                : 'bg-[#0C0C0E] border-[#00F0FF]/25 text-white/90 hover:border-[#00F0FF]'
                             }`}
                           >
                             <div className="mt-0.5 shrink-0">
@@ -1435,7 +1486,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                   </div>
 
                   {/* External Materials Section */}
-                  <div className={`mt-3 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-white/10'}`}>
+                  <div className={`mt-3.5 pt-2.5 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
                     <div className="flex items-center justify-between text-xs mb-1 font-mono">
                       <span className={`text-[11px] flex items-center gap-1 ${isLight ? 'text-slate-600 font-medium' : 'text-white/60'}`}>
                         <FolderOpen className={`w-3 h-3 ${isLight ? 'text-purple-500' : 'text-[#00F0FF]'}`} />
@@ -1460,7 +1511,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                             className={`flex items-center justify-between p-1.5 border text-xs font-mono ${
                               isLight
                                 ? 'bg-white/80 border-slate-200 text-slate-800 rounded'
-                                : 'bg-[#0C0C0E] border-white/10 text-white/90'
+                                : 'bg-[#0C0C0E] border-[#00F0FF]/20 text-white/90'
                             }`}
                           >
                             <button
@@ -1515,7 +1566,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                   </div>
 
                   {/* Module Notes & Abatement Badges Section */}
-                  <div className={`mt-3 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-white/10'}`}>
+                  <div className={`mt-3.5 pt-2.5 border-t-[1.5px] ${isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'}`}>
                     <div className="flex items-center justify-between text-xs mb-1 font-mono">
                       <button
                         type="button"
@@ -1558,7 +1609,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                             className={`p-2 border text-xs font-mono space-y-1 ${
                               isLight
                                 ? 'bg-white/90 border-slate-200 text-slate-800 shadow-2xs rounded-lg'
-                                : 'bg-[#0C0C0E] border-white/10 text-white'
+                                : 'bg-[#0C0C0E] border-[#00F0FF]/25 text-white'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-1">
@@ -1574,7 +1625,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                                   </span>
                                 )}
                                 {nt.studyHours && (
-                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-white/10 text-white/70 border border-white/10">
+                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/30">
                                     {nt.studyHours}h
                                   </span>
                                 )}
@@ -1591,8 +1642,8 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                 </div>
 
                 {/* Card Footer Actions */}
-                <div className={`mt-4 pt-3 border-t flex items-center justify-between gap-1.5 text-xs font-mono ${
-                  isLight ? 'border-slate-200/90' : 'border-white/10'
+                <div className={`mt-4 pt-3 border-t-[1.5px] flex items-center justify-between gap-1.5 text-xs font-mono ${
+                  isLight ? 'border-slate-200/90' : 'border-[#00F0FF]/25'
                 }`}>
                   <div className="flex items-center gap-1.5">
                     <button

@@ -7,8 +7,9 @@
   --accent-glow: rgba(0, 240, 255, 0.35);
   --surface: #141417;
   --surface-alt: #1A1A1F;
-  --border: rgba(255, 255, 255, 0.1);
-  --border-tech: rgba(0, 240, 255, 0.3);
+  --border: rgba(0, 240, 255, 0.28);
+  --border-tech: rgba(0, 240, 255, 0.45);
+  --divider-tech: rgba(0, 240, 255, 0.24);
 }
 
 @layer base {
@@ -34,7 +35,7 @@
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .dot-matrix {
@@ -42,18 +43,23 @@
   background-size: 16px 16px;
 }
 
-/* Technical Card Aesthetic - Variation 3 */
+/* Technical Card Aesthetic - Marked Dividing Contours */
 .technical-card {
   background: var(--surface);
   border: 1.5px solid var(--border);
   position: relative;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(0, 240, 255, 0.12);
 }
 
 .technical-card:hover {
   border-color: var(--accent);
-  box-shadow: 0 0 16px -2px var(--accent-glow);
+  box-shadow: 0 0 20px -2px var(--accent-glow), 0 8px 24px -4px rgba(0, 0, 0, 0.8);
   transform: translateY(-2px);
+}
+
+.divider-tech {
+  border-color: var(--divider-tech);
 }
 
 .progress-bar-tech {
