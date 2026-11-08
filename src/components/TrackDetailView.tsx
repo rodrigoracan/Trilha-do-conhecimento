@@ -623,22 +623,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
       }
     }
 
-    switch (color) {
-      case 'sky':
-        return 'bg-[#0c1830] border-2 border-sky-400/60 shadow-md';
-      case 'purple':
-        return 'bg-[#130b24] border-2 border-purple-400/60 shadow-md';
-      case 'rose':
-        return 'bg-[#1c0812] border-2 border-rose-400/60 shadow-md';
-      case 'emerald':
-        return 'bg-[#071c12] border-2 border-emerald-400/60 shadow-md';
-      case 'amber':
-        return 'bg-[#1e1305] border-2 border-amber-400/60 shadow-md';
-      case 'teal':
-        return 'bg-[#061b1c] border-2 border-teal-400/60 shadow-md';
-      default:
-        return 'bg-[#0c1830] border-2 border-slate-700/80 shadow-md';
-    }
+    return 'bg-[#141417] border-[1.5px] border-white/10 hover:border-[#00F0FF] transition-all';
   };
 
   const getTrackBannerStyles = (color?: string) => {
@@ -660,7 +645,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
           return 'bg-[#edf6ff] border-2 border-sky-400 shadow-md shadow-sky-900/5';
       }
     }
-    return 'bg-gradient-to-r from-[#0c1830] via-[#0f2142] to-[#0c1830] border-2 border-blue-400/60 shadow-xl shadow-black/40';
+    return 'technical-card bg-[#141417] border-[1.5px] border-white/10 hover:border-[#00F0FF] shadow-2xl';
   };
 
   // Card theme helper matching CertificationsView layout
@@ -727,93 +712,42 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
       }
     }
 
-    // Dark Mode Theme (royal blue cards, elevated with vibrant borders)
-    switch (key) {
-      case 'emerald':
-        return {
-          cardBg: 'card-3d-base card-3d-emerald',
-          titleColor: 'text-emerald-300',
-          badgeClass: 'bg-emerald-950/90 text-emerald-300 border-emerald-500/50',
-          progressBg: 'bg-emerald-500',
-          iconColor: 'text-emerald-400',
-        };
-      case 'purple':
-        return {
-          cardBg: 'card-3d-base card-3d-purple',
-          titleColor: 'text-purple-300',
-          badgeClass: 'bg-purple-950/90 text-purple-300 border-purple-500/50',
-          progressBg: 'bg-purple-500',
-          iconColor: 'text-purple-400',
-        };
-      case 'amber':
-        return {
-          cardBg: 'card-3d-base card-3d-amber',
-          titleColor: 'text-amber-300',
-          badgeClass: 'bg-amber-950/90 text-amber-300 border-amber-500/50',
-          progressBg: 'bg-amber-500',
-          iconColor: 'text-amber-400',
-        };
-      case 'rose':
-        return {
-          cardBg: 'card-3d-base card-3d-rose',
-          titleColor: 'text-rose-300',
-          badgeClass: 'bg-rose-950/90 text-rose-300 border-rose-500/50',
-          progressBg: 'bg-rose-500',
-          iconColor: 'text-rose-400',
-        };
-      case 'teal':
-        return {
-          cardBg: 'card-3d-base card-3d-teal',
-          titleColor: 'text-teal-300',
-          badgeClass: 'bg-teal-950/90 text-teal-300 border-teal-500/50',
-          progressBg: 'bg-teal-500',
-          iconColor: 'text-teal-400',
-        };
-      case 'indigo':
-        return {
-          cardBg: 'card-3d-base card-3d-indigo',
-          titleColor: 'text-indigo-300',
-          badgeClass: 'bg-indigo-950/90 text-indigo-300 border-indigo-500/50',
-          progressBg: 'bg-indigo-500',
-          iconColor: 'text-indigo-400',
-        };
-      default:
-        return {
-          cardBg: 'card-3d-base card-3d-sky',
-          titleColor: 'text-sky-300',
-          badgeClass: 'bg-sky-950/90 text-sky-300 border-sky-500/50',
-          progressBg: 'bg-sky-500',
-          iconColor: 'text-sky-400',
-        };
-    }
+    // Technical Dark Mode Theme (Variation 3: RACAN Study OS)
+    return {
+      cardBg: 'technical-card',
+      titleColor: 'text-white',
+      badgeClass: 'bg-[#0C0C0E] text-[#00F0FF] border-[#00F0FF]/40 font-mono',
+      progressBg: 'bg-[#00F0FF]',
+      iconColor: 'text-[#00F0FF]',
+    };
   };
 
   return (
     <div className="space-y-5 animate-fadeIn">
-      {/* Breadcrumb Navigation & Top Action Bar with Contour */}
+      {/* Breadcrumb Navigation & Top Action Bar */}
       <div
-        className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl border-2 transition-colors ${
+        className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 border-[1.5px] transition-colors ${
           isLight
             ? 'bg-[#e5f0fc] border-[#8cb7ea] shadow-md shadow-sky-900/5'
-            : 'bg-[#0d1830] border-2 border-slate-700/60 shadow-md'
+            : 'bg-[#141417] border-white/10 shadow-lg'
         }`}
       >
-        <div className="flex items-center gap-2 text-xs sm:text-sm">
+        <div className="flex items-center gap-2 text-xs sm:text-sm font-mono">
           <button
             onClick={onBackToTracks}
             className={`flex items-center gap-1.5 font-bold transition cursor-pointer ${
-              isLight ? 'text-sky-800 hover:text-sky-950' : 'text-sky-400 hover:text-sky-300'
+              isLight ? 'text-sky-800 hover:text-sky-950' : 'text-[#00F0FF] hover:underline'
             }`}
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Trilhas RACAN</span>
+            <span>ROOT_TRILHAS</span>
           </button>
-          <span className={isLight ? 'text-slate-400 font-bold' : 'text-slate-600'}>/</span>
-          <span className={`font-mono truncate ${isLight ? 'text-slate-600 font-semibold' : 'text-slate-400'}`}>
-            {track.category}
+          <span className={isLight ? 'text-slate-400 font-bold' : 'text-white/30'}>/</span>
+          <span className={`truncate ${isLight ? 'text-slate-600 font-semibold' : 'text-white/60'}`}>
+            {track.category.toUpperCase()}
           </span>
-          <span className={isLight ? 'text-slate-400 font-bold' : 'text-slate-600'}>/</span>
-          <span className={`font-extrabold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          <span className={isLight ? 'text-slate-400 font-bold' : 'text-white/30'}>/</span>
+          <span className={`font-bold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
             {track.title}
           </span>
         </div>
@@ -822,14 +756,10 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
           {onOpenGeminiChat && (
             <button
               onClick={() => onOpenGeminiChat(track.title)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border shadow-xs ${
-                isLight
-                  ? 'bg-white hover:bg-sky-50 text-sky-950 border-sky-400'
-                  : 'btn-3d-dark text-slate-100 hover:text-white border-sky-500/40'
-              }`}
+              className={isLight ? 'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer bg-white border border-sky-400 text-sky-950 shadow-xs' : 'btn-tech-subtle flex items-center gap-1.5 px-3 py-1.5'}
               title="Fazer perguntas ao Gemini com o contexto desta trilha"
             >
-              <GoogleGeminiLogo className="w-3.5 h-3.5 text-sky-500" />
+              <GoogleGeminiLogo className="w-3.5 h-3.5 text-[#00F0FF]" />
               <span>Dúvidas com Gemini</span>
             </button>
           )}
@@ -837,11 +767,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
           {onOpenNotebookGemini && (
             <button
               onClick={() => onOpenNotebookGemini(track.id || track.slug)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition border shadow-xs ${
-                isLight
-                  ? 'bg-white hover:bg-purple-50 text-purple-950 border-purple-400'
-                  : 'btn-3d-dark text-slate-100 hover:text-white border-purple-500/40'
-              }`}
+              className={isLight ? 'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer bg-white border border-purple-400 text-purple-950 shadow-xs' : 'btn-tech-subtle flex items-center gap-1.5 px-3 py-1.5'}
               title="Abrir Caderno de Livros e Caixa de Roteiros desta trilha"
             >
               <NotebookLMLogo className="w-3.5 h-3.5" />
@@ -852,147 +778,149 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
           {onStartPomodoroForTrack && (
             <button
               onClick={() => onStartPomodoroForTrack(track.title)}
-              className="btn-3d-amber px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+              className={isLight ? 'btn-3d-amber px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer' : 'btn-tech-subtle flex items-center gap-1.5 px-3 py-1.5'}
               title="Iniciar bloco Pomodoro focado nesta trilha"
             >
-              <Timer className="w-3.5 h-3.5" />
+              <Timer className="w-3.5 h-3.5 text-[#00F0FF]" />
               <span>Pomodoro</span>
             </button>
           )}
 
-          {/* Substituted button name: "Novo Módulo" as requested */}
           <button
             onClick={() => {
               setSubcategoryToEdit(null);
               setIsSubcategoryModalOpen(true);
             }}
-            className="btn-3d-primary px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
+            className={isLight ? 'btn-3d-primary px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md' : 'btn-tech flex items-center gap-1.5 px-3.5 py-1.5'}
             title="Criar novo módulo dentro desta trilha"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Novo Módulo</span>
+            <span>+ Novo Módulo</span>
           </button>
         </div>
       </div>
 
-      {/* Main Track Banner with Respective Light Pastel Color and Standout Contour */}
+      {/* Main Track Banner - Technical Command Console */}
       <div
-        className={`rounded-2xl p-5 sm:p-6 shadow-lg space-y-4 overflow-hidden relative ${getTrackBannerStyles(
+        className={`p-5 sm:p-6 shadow-xl space-y-4 overflow-hidden relative border-[1.5px] ${getTrackBannerStyles(
           track.colorTheme
         )}`}
       >
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <div className="space-y-1.5 max-w-3xl">
+          <div className="space-y-2 max-w-3xl">
             <div className="flex flex-wrap items-center gap-2">
+              <span className="label-tech">TRACK_CONSOLE // SEC_01</span>
               <span
-                className={`px-2.5 py-0.5 rounded-md text-xs font-bold border ${
+                className={`px-2 py-0.5 text-[11px] font-mono font-bold border ${
                   isLight
                     ? 'bg-sky-50 text-sky-800 border-sky-300'
-                    : 'bg-sky-500/20 text-sky-300 border-sky-400/30'
+                    : 'bg-[#00F0FF]/10 text-[#00F0FF] border-[#00F0FF]/40'
                 }`}
               >
-                {track.category}
+                [ {track.category.toUpperCase()} ]
               </span>
 
               {/* Clickable Schedule Badge */}
               <button
                 onClick={() => setViewMode('schedule')}
-                className={`px-2.5 py-0.5 rounded-md text-xs font-bold border transition cursor-pointer flex items-center gap-1.5 shadow-2xs ${
+                className={`px-2.5 py-1 text-xs font-mono font-bold border transition cursor-pointer flex items-center gap-1.5 ${
                   viewMode === 'schedule'
-                    ? 'bg-purple-600 text-white border-purple-700'
+                    ? isLight ? 'bg-purple-600 text-white border-purple-700' : 'bg-[#00F0FF] text-[#0C0C0E] border-[#00F0FF]'
                     : isLight
                     ? 'bg-purple-50 hover:bg-purple-100 text-purple-900 border-purple-300'
-                    : 'bg-purple-950/60 hover:bg-purple-900 text-purple-300 border-purple-800'
+                    : 'btn-tech-subtle'
                 }`}
                 title="Abrir cronograma de dias e horários desta trilha"
               >
-                <Calendar className="w-3 h-3 text-purple-500" />
+                <Calendar className="w-3 h-3 text-[#00F0FF]" />
                 <span>
-                  Cronograma: {track.schedule?.daysOfWeek?.slice(0, 3).join(', ') || 'Configurar dias'}
+                  CRONOGRAMA: {track.schedule?.daysOfWeek?.slice(0, 3).join(', ') || 'CONFIGURAR'}
                   {track.schedule?.daysOfWeek && track.schedule.daysOfWeek.length > 3 ? '...' : ''}
-                  {track.schedule?.weeklyTargetHours ? ` · ${track.schedule.weeklyTargetHours}h/sem` : ''}
+                  {track.schedule?.weeklyTargetHours ? ` · ${track.schedule.weeklyTargetHours}H/SEM` : ''}
                 </span>
               </button>
 
               {/* Clickable Dashboard 18M Badge */}
               <button
                 onClick={() => setViewMode('dashboard')}
-                className={`px-2.5 py-0.5 rounded-md text-xs font-bold border transition cursor-pointer flex items-center gap-1.5 shadow-2xs ${
+                className={`px-2.5 py-1 text-xs font-mono font-bold border transition cursor-pointer flex items-center gap-1.5 ${
                   viewMode === 'dashboard'
-                    ? 'bg-emerald-600 text-white border-emerald-700'
+                    ? isLight ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-[#00F0FF] text-[#0C0C0E] border-[#00F0FF]'
                     : isLight
                     ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border-emerald-300'
-                    : 'bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border-emerald-800'
+                    : 'btn-tech-subtle'
                 }`}
                 title="Abrir Dashboard de Desempenho e Meta 18 Meses"
               >
-                <TrendingUp className="w-3 h-3 text-emerald-500" />
+                <TrendingUp className="w-3 h-3 text-[#00F0FF]" />
                 <span>
-                  Dashboard: {progressPercentage}% · Meta 18M
+                  DASHBOARD: {progressPercentage}% · META 18M
                 </span>
               </button>
 
               {track.tags?.map((t, idx) => (
                 <span
                   key={idx}
-                  className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
+                  className={`px-2 py-0.5 text-[10px] font-mono border ${
                     isLight
                       ? 'bg-slate-100 text-slate-700 border-slate-200 font-medium'
-                      : 'bg-[#081324] text-slate-300 border-slate-700'
+                      : 'bg-[#0C0C0E] text-white/50 border-white/10'
                   }`}
                 >
-                  {t}
+                  #{t}
                 </span>
               ))}
             </div>
 
-            <h2 className={`text-xl sm:text-2xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${isLight ? 'text-slate-900' : 'text-white font-[\'Syne\',sans-serif]'}`}>
               {track.title}
             </h2>
-            <p className={`text-xs sm:text-sm font-semibold ${isLight ? 'text-sky-700' : 'text-sky-200'}`}>
+            <p className={`text-xs sm:text-sm font-mono ${isLight ? 'text-sky-700 font-semibold' : 'text-[#00F0FF]'}`}>
               {track.subtitle}
             </p>
-            <p className={`text-xs leading-relaxed pt-1 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+            <p className={`text-xs leading-relaxed pt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
               {track.description}
             </p>
           </div>
 
-          {/* Quick Stats Grid */}
+          {/* Quick Stats Grid - Technical Dark */}
           <div
-            className={`grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full lg:w-auto shrink-0 p-3 rounded-xl border font-mono text-center ${
-              isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#071120]/80 border-slate-700/60'
+            className={`w-full lg:w-auto shrink-0 ${
+              isLight
+                ? 'grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl border font-mono text-center bg-slate-50 border-slate-200'
+                : 'stat-grid rounded-none w-full lg:w-80'
             }`}
           >
-            <div className="px-2 py-1">
-              <div className={`text-lg font-bold ${isLight ? 'text-sky-700' : 'text-sky-400'}`}>
+            <div className={isLight ? 'px-2 py-1' : 'stat-item'}>
+              <span className={isLight ? 'text-[10px] font-sans uppercase font-medium text-slate-500 block' : 'label-tech'}>
+                Módulos
+              </span>
+              <div className={`text-lg font-bold font-mono ${isLight ? 'text-sky-700' : 'stat-value text-white'}`}>
                 {subsCount}
               </div>
-              <div className={`text-[10px] font-sans uppercase font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                Módulos
-              </div>
             </div>
-            <div className="px-2 py-1">
-              <div className={`text-lg font-bold ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>
+            <div className={isLight ? 'px-2 py-1' : 'stat-item'}>
+              <span className={isLight ? 'text-[10px] font-sans uppercase font-medium text-slate-500 block' : 'label-tech'}>
+                Carga Horária
+              </span>
+              <div className={`text-lg font-bold font-mono ${isLight ? 'text-amber-700' : 'stat-value text-[#00F0FF]'}`}>
                 {totalTrackHoursSpent}h / {totalTrackHoursEstimated}h
               </div>
-              <div className={`text-[10px] font-sans uppercase font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                Carga Horária
-              </div>
             </div>
-            <div className="px-2 py-1">
-              <div className={`text-lg font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+            <div className={isLight ? 'px-2 py-1' : 'stat-item'}>
+              <span className={isLight ? 'text-[10px] font-sans uppercase font-medium text-slate-500 block' : 'label-tech'}>
+                Tópicos
+              </span>
+              <div className={`text-lg font-bold font-mono ${isLight ? 'text-emerald-700' : 'stat-value text-white'}`}>
                 {completedItemsCount}/{totalItemsCount}
               </div>
-              <div className={`text-[10px] font-sans uppercase font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                Tópicos
-              </div>
             </div>
-            <div className="px-2 py-1">
-              <div className={`text-lg font-bold ${isLight ? 'text-purple-700' : 'text-purple-400'}`}>
-                {trackNotes.length}
-              </div>
-              <div className={`text-[10px] font-sans uppercase font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            <div className={isLight ? 'px-2 py-1' : 'stat-item'}>
+              <span className={isLight ? 'text-[10px] font-sans uppercase font-medium text-slate-500 block' : 'label-tech'}>
                 Anotações
+              </span>
+              <div className={`text-lg font-bold font-mono ${isLight ? 'text-purple-700' : 'stat-value text-white'}`}>
+                {trackNotes.length}
               </div>
             </div>
           </div>
@@ -1000,18 +928,18 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
 
         {/* Overall Progress Bar */}
         <div className="space-y-1.5 pt-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className={`font-semibold flex items-center gap-1.5 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              Progresso Geral da Trilha
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className={`font-semibold flex items-center gap-1.5 ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
+              <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-500' : 'text-[#00F0FF]'}`} />
+              PROGRESSO_GERAL_DA_TRILHA
             </span>
-            <span className={`font-bold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              {progressPercentage}% concluído · {totalTrackHoursSpent}h de {totalTrackHoursEstimated}h ({completedItemsCount} de {totalItemsCount} tópicos)
+            <span className={`font-bold font-mono ${isLight ? 'text-slate-900' : 'text-[#00F0FF]'}`}>
+              {progressPercentage}% CONCLUÍDO · {totalTrackHoursSpent}h de {totalTrackHoursEstimated}h ({completedItemsCount}/{totalItemsCount} tópicos)
             </span>
           </div>
-          <div className={`w-full h-2.5 rounded-full overflow-hidden shadow-inner ${isLight ? 'bg-slate-200' : 'bg-[#071120]'}`}>
+          <div className={isLight ? 'w-full h-2.5 rounded-full overflow-hidden shadow-inner bg-slate-200' : 'progress-bar-tech h-2'}>
             <div
-              className="h-full bg-gradient-to-r from-sky-500 via-blue-500 to-emerald-500 rounded-full transition-all duration-500"
+              className={isLight ? 'h-full bg-gradient-to-r from-sky-500 via-blue-500 to-emerald-500 rounded-full transition-all duration-500' : 'progress-fill-tech h-full'}
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -1020,30 +948,30 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
 
       {/* Switcher: Módulos & Conteúdos vs. Cronograma & Dias de Estudo */}
       <div
-        className={`p-1.5 rounded-2xl border-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 transition-colors ${
-          isLight ? 'bg-[#dbe9fa] border-[#76a7e8]' : 'bg-[#0b172d] border-slate-800'
+        className={`p-1.5 border-[1.5px] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 transition-colors ${
+          isLight ? 'bg-[#dbe9fa] border-[#76a7e8]' : 'bg-[#141417] border-white/10'
         }`}
       >
-        <div className="flex items-center gap-1.5 w-full sm:w-auto">
+        <div className="flex items-center gap-1.5 w-full sm:w-auto font-mono">
           <button
             onClick={() => setViewMode('modules')}
-            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition cursor-pointer border ${
+            className={`flex-1 sm:flex-initial px-4 py-2 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer border ${
               viewMode === 'modules'
                 ? isLight
                   ? 'bg-white text-sky-950 border-sky-400 shadow-sm'
-                  : 'bg-sky-600 text-white border-sky-500 shadow-sm'
+                  : 'bg-[#00F0FF] text-[#0C0C0E] border-[#00F0FF]'
                 : isLight
                 ? 'text-slate-700 hover:bg-white/60 border-transparent'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800 border-transparent'
+                : 'btn-tech-subtle border-transparent'
             }`}
           >
-            <BookOpen className="w-4 h-4 text-sky-600" />
-            <span>Módulos & Conteúdos</span>
+            <BookOpen className="w-4 h-4" />
+            <span>[x] Módulos & Conteúdos</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+              className={`px-2 py-0.5 text-[10px] font-mono font-bold ${
                 viewMode === 'modules'
-                  ? 'bg-sky-100 text-sky-900'
-                  : 'bg-black/10 text-slate-700 dark:text-slate-300'
+                  ? isLight ? 'bg-sky-100 text-sky-900' : 'bg-[#0C0C0E] text-[#00F0FF]'
+                  : 'bg-white/10 text-white/70'
               }`}
             >
               {track.subcategories?.length || 0}
@@ -1052,23 +980,23 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
 
           <button
             onClick={() => setViewMode('schedule')}
-            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition cursor-pointer border ${
+            className={`flex-1 sm:flex-initial px-4 py-2 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer border ${
               viewMode === 'schedule'
                 ? isLight
                   ? 'bg-white text-purple-950 border-purple-400 shadow-sm'
-                  : 'bg-purple-600 text-white border-purple-500 shadow-sm'
+                  : 'bg-[#00F0FF] text-[#0C0C0E] border-[#00F0FF]'
                 : isLight
                 ? 'text-slate-700 hover:bg-white/60 border-transparent'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800 border-transparent'
+                : 'btn-tech-subtle border-transparent'
             }`}
           >
-            <Calendar className="w-4 h-4 text-purple-600" />
-            <span>Cronograma & Dias de Estudo</span>
+            <Calendar className="w-4 h-4" />
+            <span>[ ] Cronograma Semanal</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+              className={`px-2 py-0.5 text-[10px] font-mono font-bold ${
                 viewMode === 'schedule'
-                  ? 'bg-purple-100 text-purple-900'
-                  : 'bg-black/10 text-slate-700 dark:text-slate-300'
+                  ? isLight ? 'bg-purple-100 text-purple-900' : 'bg-[#0C0C0E] text-[#00F0FF]'
+                  : 'bg-white/10 text-white/70'
               }`}
             >
               {track.schedule?.daysOfWeek?.length || 0} dias · {track.schedule?.weeklyTargetHours || 3}h/sem
@@ -1077,26 +1005,26 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
 
           <button
             onClick={() => setViewMode('dashboard')}
-            className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition cursor-pointer border ${
+            className={`flex-1 sm:flex-initial px-4 py-2 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer border ${
               viewMode === 'dashboard'
                 ? isLight
                   ? 'bg-white text-emerald-950 border-emerald-400 shadow-sm'
-                  : 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                  : 'bg-[#00F0FF] text-[#0C0C0E] border-[#00F0FF]'
                 : isLight
                 ? 'text-slate-700 hover:bg-white/60 border-transparent'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800 border-transparent'
+                : 'btn-tech-subtle border-transparent'
             }`}
           >
-            <BarChart3 className="w-4 h-4 text-emerald-600" />
-            <span>Dashboard de Desempenho</span>
+            <BarChart3 className="w-4 h-4" />
+            <span>[ ] Dashboard Desempenho</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+              className={`px-2 py-0.5 text-[10px] font-mono font-bold ${
                 viewMode === 'dashboard'
-                  ? 'bg-emerald-100 text-emerald-900'
-                  : 'bg-black/10 text-slate-700 dark:text-slate-300'
+                  ? isLight ? 'bg-emerald-100 text-emerald-900' : 'bg-[#0C0C0E] text-[#00F0FF]'
+                  : 'bg-white/10 text-white/70'
               }`}
             >
-              Recharts · 18M
+              Meta 18M
             </span>
           </button>
         </div>
@@ -1108,18 +1036,18 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                 setSubcategoryToEdit(null);
                 setIsSubcategoryModalOpen(true);
               }}
-              className="btn-3d-primary px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm"
+              className={isLight ? 'btn-3d-primary px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm' : 'btn-tech px-3.5 py-1.5 flex items-center gap-1.5'}
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Novo Módulo</span>
             </button>
           ) : viewMode === 'dashboard' ? (
-            <span className="text-xs text-slate-500 font-medium px-2 hidden sm:inline">
-              Métricas e Recharts calculados para esta trilha
+            <span className="text-xs font-mono text-white/50 px-2 hidden sm:inline">
+              // Recharts calculados para esta trilha
             </span>
           ) : (
-            <span className="text-xs text-slate-500 font-medium px-2 hidden sm:inline">
-              Defina os dias e horários para estudar esta trilha
+            <span className="text-xs font-mono text-white/50 px-2 hidden sm:inline">
+              // Defina os dias e horários para estudar esta trilha
             </span>
           )}
         </div>
@@ -1149,42 +1077,42 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
         <>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
-          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? 'text-slate-400' : 'text-slate-400'}`} />
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? 'text-slate-400' : 'text-[#00F0FF]'}`} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Pesquisar neste módulo (tópico, aula, link ou anotação)..."
-            className={`w-full pl-10 pr-4 py-2 rounded-lg text-xs sm:text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/30 ${
+            placeholder="> RUN SEARCH_MODULES_ (tópico, aula, anotação)..."
+            className={`w-full pl-10 pr-4 py-2 text-xs sm:text-sm font-mono transition focus:outline-none ${
               isLight
-                ? 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:border-sky-500'
-                : 'bg-[#09152a] border border-slate-700 text-white placeholder-slate-400 focus:border-sky-500'
+                ? 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:border-sky-500 rounded-lg'
+                : 'bg-[#141417] border border-white/10 text-white placeholder-white/30 focus:border-[#00F0FF]'
             }`}
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs ${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-400 hover:text-white'}`}
+              className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs ${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-white/50 hover:text-[#00F0FF]'}`}
             >
               ✕
             </button>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto text-xs">
+        <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto text-xs font-mono">
           {/* Layout switcher: Quadros (Blocos) vs. Lista Detalhada */}
-          <div className={`flex items-center p-0.5 rounded-lg border ${
-            isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-800/80 border-slate-700'
+          <div className={`flex items-center p-0.5 border ${
+            isLight ? 'bg-slate-100 border-slate-200 rounded-lg' : 'bg-[#141417] border-white/10'
           }`}>
             <button
               type="button"
               onClick={() => setModulesLayout('blocks')}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+              className={`px-2.5 py-1 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
                 modulesLayout === 'blocks'
-                  ? 'bg-sky-600 text-white shadow-xs'
+                  ? isLight ? 'bg-sky-600 text-white shadow-xs rounded-md' : 'bg-[#00F0FF] text-[#0C0C0E] font-bold'
                   : isLight
                   ? 'text-slate-700 hover:text-slate-900'
-                  : 'text-slate-300 hover:text-white'
+                  : 'text-white/60 hover:text-white'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -1193,12 +1121,12 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
             <button
               type="button"
               onClick={() => setModulesLayout('list')}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+              className={`px-2.5 py-1 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
                 modulesLayout === 'list'
-                  ? 'bg-sky-600 text-white shadow-xs'
+                  ? isLight ? 'bg-sky-600 text-white shadow-xs rounded-md' : 'bg-[#00F0FF] text-[#0C0C0E] font-bold'
                   : isLight
                   ? 'text-slate-700 hover:text-slate-900'
-                  : 'text-slate-300 hover:text-white'
+                  : 'text-white/60 hover:text-white'
               }`}
             >
               <List className="w-3.5 h-3.5" />
@@ -1210,21 +1138,13 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
             <>
               <button
                 onClick={expandAll}
-                className={`px-3 py-1.5 rounded-lg border font-medium transition cursor-pointer ${
-                  isLight
-                    ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
-                    : 'btn-3d-dark text-slate-300 hover:text-white'
-                }`}
+                className={isLight ? 'px-3 py-1.5 rounded-lg border font-medium transition cursor-pointer bg-white hover:bg-slate-100 border-slate-200 text-slate-700' : 'btn-tech-subtle px-3 py-1.5'}
               >
                 Expandir Todos
               </button>
               <button
                 onClick={collapseAll}
-                className={`px-3 py-1.5 rounded-lg border font-medium transition cursor-pointer ${
-                  isLight
-                    ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
-                    : 'btn-3d-dark text-slate-300 hover:text-white'
-                }`}
+                className={isLight ? 'px-3 py-1.5 rounded-lg border font-medium transition cursor-pointer bg-white hover:bg-slate-100 border-slate-200 text-slate-700' : 'btn-tech-subtle px-3 py-1.5'}
               >
                 Recolher Todos
               </button>
@@ -1236,7 +1156,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
               setSubcategoryToEdit(null);
               setIsSubcategoryModalOpen(true);
             }}
-            className="btn-3d-primary px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm"
+            className={isLight ? 'btn-3d-primary px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm' : 'btn-tech px-3 py-1.5 flex items-center gap-1.5'}
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Novo Módulo</span>
@@ -1278,17 +1198,23 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
             return (
               <div
                 key={subcategory.id}
-                className={`rounded-2xl ${cardTheme.cardBg} p-5 flex flex-col justify-between select-none transition-all duration-200 hover:-translate-y-1 relative`}
+                className={`p-5 flex flex-col justify-between select-none transition-all duration-200 relative ${
+                  isLight
+                    ? `rounded-2xl ${cardTheme.cardBg} hover:-translate-y-1`
+                    : 'technical-card border-white/10 hover:border-[#00F0FF]'
+                }`}
               >
                 <div>
                   {/* Header: Module Code Badge, Status Selector & Three-dots Menu */}
-                  <div className="flex items-center justify-between gap-2 text-xs mb-3">
+                  <div className="flex items-center justify-between gap-2 text-xs mb-3 font-mono">
                     <div className="flex items-center gap-2">
-                      <span className={`text-sm font-black font-mono px-2.5 py-1 rounded-md border ${cardTheme.badgeClass}`}>
+                      <span className={`text-xs font-bold font-mono px-2 py-0.5 border ${
+                        isLight ? cardTheme.badgeClass : 'bg-[#0C0C0E] text-[#00F0FF] border-[#00F0FF]/40'
+                      }`}>
                         MOD {String(index + 1).padStart(2, '0')}
                       </span>
-                      <span className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                        Módulo {index + 1}
+                      <span className={isLight ? 'text-[11px] font-medium text-slate-600' : 'label-tech'}>
+                        SEC_MOD_{String(index + 1).padStart(2, '0')}
                       </span>
                     </div>
 
@@ -1296,10 +1222,10 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                       <select
                         value={subcategory.status || 'Planejada'}
                         onChange={(e) => handleModuleStatusChange(subcategory, e.target.value as CertStatus)}
-                        className={`text-[11px] font-semibold px-2 py-0.5 rounded cursor-pointer focus:outline-none border ${
+                        className={`text-[11px] font-mono font-semibold px-2 py-0.5 cursor-pointer focus:outline-none border ${
                           isLight
-                            ? 'bg-white border-slate-300 text-slate-800'
-                            : 'bg-slate-950/90 border-slate-700/60 text-slate-300'
+                            ? 'bg-white border-slate-300 text-slate-800 rounded'
+                            : 'bg-[#0C0C0E] border-white/20 text-[#00F0FF] focus:border-[#00F0FF]'
                         }`}
                       >
                         <option value="Planejada">Planejada</option>
@@ -1315,8 +1241,10 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                             e.stopPropagation();
                             setOpenDropdownSubId(openDropdownSubId === subcategory.id ? null : subcategory.id);
                           }}
-                          className={`p-1 rounded-md transition cursor-pointer ${
-                            isLight ? 'hover:bg-slate-200/80 text-slate-600' : 'hover:bg-slate-800 text-slate-400 hover:text-white'
+                          className={`p-1 transition cursor-pointer ${
+                            isLight
+                              ? 'rounded-md hover:bg-slate-200/80 text-slate-600'
+                              : 'hover:bg-white/10 text-white/50 hover:text-[#00F0FF]'
                           }`}
                           title="Opções do Módulo"
                         >
@@ -1326,8 +1254,10 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                         {openDropdownSubId === subcategory.id && (
                           <div
                             onClick={(e) => e.stopPropagation()}
-                            className={`absolute right-0 top-full mt-1 w-44 rounded-xl shadow-xl border py-1.5 z-30 animate-fadeIn ${
-                              isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#0d1c34] border-slate-700 text-slate-200'
+                            className={`absolute right-0 top-full mt-1 w-48 shadow-2xl border py-1.5 z-30 animate-fadeIn font-mono text-xs ${
+                              isLight
+                                ? 'bg-white border-slate-200 text-slate-800 rounded-xl'
+                                : 'bg-[#141417] border-white/10 text-white'
                             }`}
                           >
                             <button
@@ -1337,8 +1267,8 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                                 setSubcategoryToEdit(subcategory);
                                 setIsSubcategoryModalOpen(true);
                               }}
-                              className={`w-full px-3 py-1.5 text-xs text-left font-medium flex items-center gap-2 cursor-pointer transition ${
-                                isLight ? 'hover:bg-slate-100' : 'hover:bg-slate-800'
+                              className={`w-full px-3 py-1.5 text-left font-medium flex items-center gap-2 cursor-pointer transition ${
+                                isLight ? 'hover:bg-slate-100' : 'hover:bg-white/10 text-[#00F0FF]'
                               }`}
                             >
                               <Edit2 className="w-3.5 h-3.5 text-sky-500" />
@@ -1351,15 +1281,15 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                                 setOpenDropdownSubId(null);
                                 openQuickHoursModal(subcategory);
                               }}
-                              className={`w-full px-3 py-1.5 text-xs text-left font-medium flex items-center gap-2 cursor-pointer transition ${
-                                isLight ? 'hover:bg-slate-100' : 'hover:bg-slate-800'
+                              className={`w-full px-3 py-1.5 text-left font-medium flex items-center gap-2 cursor-pointer transition ${
+                                isLight ? 'hover:bg-slate-100' : 'hover:bg-white/10 text-[#00F0FF]'
                               }`}
                             >
                               <Clock className="w-3.5 h-3.5 text-amber-500" />
                               <span>Carga Horária & %</span>
                             </button>
 
-                            <div className={`my-1 border-t ${isLight ? 'border-slate-100' : 'border-slate-800'}`} />
+                            <div className={`my-1 border-t ${isLight ? 'border-slate-100' : 'border-white/10'}`} />
 
                             <button
                               type="button"
@@ -1367,8 +1297,8 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                                 setOpenDropdownSubId(null);
                                 handleDeleteSubcategory(subcategory.id, subcategory.title);
                               }}
-                              className={`w-full px-3 py-1.5 text-xs text-left font-medium flex items-center gap-2 text-rose-500 cursor-pointer transition ${
-                                isLight ? 'hover:bg-rose-50' : 'hover:bg-rose-950/40'
+                              className={`w-full px-3 py-1.5 text-left font-medium flex items-center gap-2 text-rose-500 cursor-pointer transition ${
+                                isLight ? 'hover:bg-rose-50' : 'hover:bg-rose-950/40 text-rose-400'
                               }`}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1381,49 +1311,47 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                   </div>
 
                   {/* Title & Description */}
-                  <h3 className={`text-base font-bold ${cardTheme.titleColor} tracking-tight leading-snug`}>
+                  <h3 className={isLight ? `text-base font-bold ${cardTheme.titleColor} tracking-tight leading-snug` : 'text-base font-bold text-white font-[\'Syne\',sans-serif] tracking-tight leading-snug'}>
                     {subcategory.title}
                   </h3>
 
                   {subcategory.description && (
-                    <p className={`text-xs mt-1 leading-relaxed line-clamp-2 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                    <p className={`text-xs mt-1 leading-relaxed line-clamp-2 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                       {subcategory.description}
                     </p>
                   )}
 
                   {/* Progress Bar & Quick Hours / % Adjustment */}
-                  <div className={`mt-4 pt-3 border-t ${isLight ? 'border-slate-200/90' : 'border-slate-800/80'}`}>
-                    <div className={`flex items-center justify-between text-xs mb-1.5 font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+                  <div className={`mt-4 pt-3 border-t ${isLight ? 'border-slate-200/90' : 'border-white/10'}`}>
+                    <div className={`flex items-center justify-between text-xs mb-1.5 font-mono ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
                       <span>
-                        Progresso: <strong className={`font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>{subPercent}%</strong>
+                        PROGRESSO: <strong className={isLight ? 'font-mono text-slate-900' : 'font-mono text-[#00F0FF]'}>{subPercent}%</strong>
                       </span>
                       <button
                         type="button"
                         onClick={() => openQuickHoursModal(subcategory)}
-                        className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border transition flex items-center gap-1 cursor-pointer ${
+                        className={`text-[11px] font-mono font-bold px-2 py-0.5 border transition flex items-center gap-1 cursor-pointer ${
                           isLight
-                            ? 'bg-white hover:bg-sky-50 text-sky-900 border-sky-300 shadow-2xs hover:border-sky-500'
-                            : 'bg-slate-950/80 hover:bg-slate-900 text-sky-300 border-sky-500/40 hover:border-sky-400'
+                            ? 'bg-white hover:bg-sky-50 text-sky-900 border-sky-300 shadow-2xs hover:border-sky-500 rounded'
+                            : 'bg-[#0C0C0E] hover:border-[#00F0FF] text-[#00F0FF] border-white/10'
                         }`}
                         title="Clique para ajustar a carga horária total e horas estudadas"
                       >
-                        <Clock className="w-3 h-3 text-sky-500 shrink-0" />
+                        <Clock className="w-3 h-3 text-[#00F0FF] shrink-0" />
                         <span>{subHoursSpent}h / {subEstHours}h</span>
-                        <Edit2 className="w-2.5 h-2.5 text-slate-400 opacity-80" />
+                        <Edit2 className="w-2.5 h-2.5 text-white/40" />
                       </button>
                     </div>
-                    <div className={`w-full h-2 rounded-full overflow-hidden border shadow-inner ${
-                      isLight ? 'bg-slate-200/90 border-slate-300/60' : 'bg-slate-950/90 border-slate-800/80'
-                    }`}>
+                    <div className={isLight ? 'w-full h-2 rounded-full overflow-hidden border shadow-inner bg-slate-200/90 border-slate-300/60' : 'progress-bar-tech h-1.5'}>
                       <div
-                        className={`h-full ${cardTheme.progressBg} rounded-full transition-all duration-300`}
+                        className={isLight ? `h-full ${cardTheme.progressBg} rounded-full transition-all duration-300` : 'progress-fill-tech h-full'}
                         style={{ width: `${subPercent}%` }}
                       />
                     </div>
                   </div>
 
                   {/* Modules & Topics (Collapsible) */}
-                  <div className={`mt-4 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-slate-800/80'}`}>
+                  <div className={`mt-4 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-white/10'}`}>
                     <div className="flex items-center justify-between text-xs font-semibold py-1">
                       <button
                         type="button"
@@ -1433,16 +1361,16 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                             [subcategory.id]: !isTopicsExpanded,
                           }))
                         }
-                        className={`flex items-center gap-1.5 cursor-pointer transition ${
-                          isLight ? 'text-slate-800 hover:text-sky-800' : 'text-slate-300 hover:text-white'
+                        className={`flex items-center gap-1.5 cursor-pointer transition font-mono ${
+                          isLight ? 'text-slate-800 hover:text-sky-800' : 'text-white/80 hover:text-[#00F0FF]'
                         }`}
                       >
-                        <BookOpen className={`w-3.5 h-3.5 ${cardTheme.iconColor}`} />
+                        <BookOpen className={`w-3.5 h-3.5 ${isLight ? cardTheme.iconColor : 'text-[#00F0FF]'}`} />
                         <span>Conteúdos ({subCompletedItems}/{subTotalItems})</span>
                         {isTopicsExpanded ? (
-                          <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                          <ChevronDown className="w-3.5 h-3.5 text-white/40" />
                         ) : (
-                          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                          <ChevronRight className="w-3.5 h-3.5 text-white/40" />
                         )}
                       </button>
 
@@ -1453,7 +1381,9 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                           setItemToEdit(null);
                           setIsItemModalOpen(true);
                         }}
-                        className="text-[11px] text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-0.5 cursor-pointer font-medium"
+                        className={`text-[11px] flex items-center gap-0.5 cursor-pointer font-mono ${
+                          isLight ? 'text-sky-600 hover:underline font-medium' : 'text-[#00F0FF] hover:underline font-bold'
+                        }`}
                       >
                         <Plus className="w-3 h-3" /> Tópico
                       </button>
@@ -1465,29 +1395,29 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                           <div
                             key={item.id}
                             onClick={() => handleToggleItemStatus(item.id)}
-                            className={`p-2 rounded-lg border text-xs cursor-pointer transition flex items-start gap-2 ${
+                            className={`p-2 border text-xs font-mono cursor-pointer transition flex items-start gap-2 ${
                               item.status === 'Concluído'
                                 ? isLight
-                                  ? 'bg-slate-100/70 border-slate-200 text-slate-400'
-                                  : 'bg-slate-950/40 border-slate-800/50 text-slate-500'
+                                  ? 'bg-slate-100/70 border-slate-200 text-slate-400 rounded-lg'
+                                  : 'bg-[#0C0C0E]/60 border-white/5 text-white/30 line-through'
                                 : isLight
-                                ? 'bg-white/90 border-slate-200 text-slate-800 hover:border-sky-300 shadow-2xs'
-                                : 'bg-slate-950/80 border-slate-800/90 text-slate-200 hover:border-slate-700'
+                                ? 'bg-white/90 border-slate-200 text-slate-800 hover:border-sky-300 shadow-2xs rounded-lg'
+                                : 'bg-[#0C0C0E] border-white/10 text-white/90 hover:border-[#00F0FF]/50'
                             }`}
                           >
                             <div className="mt-0.5 shrink-0">
                               {item.status === 'Concluído' ? (
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-500' : 'text-[#00F0FF]'}`} />
                               ) : (
-                                <Circle className={`w-3.5 h-3.5 ${isLight ? 'text-slate-400' : 'text-slate-500'}`} />
+                                <Circle className={`w-3.5 h-3.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`} />
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className={item.status === 'Concluído' ? 'line-through text-slate-400' : 'font-medium'}>
+                              <div className={item.status === 'Concluído' ? 'line-through text-white/30' : 'font-medium'}>
                                 {item.title}
                               </div>
                               {item.description && (
-                                <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                                <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
                                   {item.description}
                                 </div>
                               )}
@@ -1496,7 +1426,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                         ))}
 
                         {filteredItems.length === 0 && (
-                          <p className="text-[11px] text-slate-500 italic py-1 text-center">
+                          <p className="text-[11px] font-mono text-white/40 italic py-1 text-center">
                             Nenhum tópico cadastrado ainda. Clique em "+ Tópico".
                           </p>
                         )}
@@ -1505,16 +1435,18 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                   </div>
 
                   {/* External Materials Section */}
-                  <div className={`mt-3 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-slate-800/80'}`}>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className={`text-[11px] font-medium flex items-center gap-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                        <FolderOpen className="w-3 h-3 text-purple-500" />
+                  <div className={`mt-3 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-white/10'}`}>
+                    <div className="flex items-center justify-between text-xs mb-1 font-mono">
+                      <span className={`text-[11px] flex items-center gap-1 ${isLight ? 'text-slate-600 font-medium' : 'text-white/60'}`}>
+                        <FolderOpen className={`w-3 h-3 ${isLight ? 'text-purple-500' : 'text-[#00F0FF]'}`} />
                         Arquivos & Links Salvos ({attachments.length})
                       </span>
                       <button
                         type="button"
                         onClick={() => handleOpenAttachDocModal(subcategory.id, subcategory.title)}
-                        className="text-[11px] text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-0.5 cursor-pointer font-medium"
+                        className={`text-[11px] flex items-center gap-0.5 cursor-pointer font-mono ${
+                          isLight ? 'text-purple-600 hover:underline font-medium' : 'text-[#00F0FF] hover:underline font-bold'
+                        }`}
                       >
                         <Plus className="w-3 h-3" /> Anexar
                       </button>
@@ -1525,10 +1457,10 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                         {attachments.map((att) => (
                           <div
                             key={att.id}
-                            className={`flex items-center justify-between p-1.5 rounded border text-xs ${
+                            className={`flex items-center justify-between p-1.5 border text-xs font-mono ${
                               isLight
-                                ? 'bg-white/80 border-slate-200 text-slate-800'
-                                : 'bg-slate-950/80 border-slate-800/80 text-slate-200'
+                                ? 'bg-white/80 border-slate-200 text-slate-800 rounded'
+                                : 'bg-[#0C0C0E] border-white/10 text-white/90'
                             }`}
                           >
                             <button
@@ -1537,12 +1469,14 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                                 setPreviewAttachment(att);
                                 setPreviewModuleTitle(subcategory.title);
                               }}
-                              className="font-medium text-purple-600 dark:text-purple-400 hover:underline truncate flex items-center gap-1.5 cursor-pointer text-left flex-1"
+                              className={`font-medium hover:underline truncate flex items-center gap-1.5 cursor-pointer text-left flex-1 ${
+                                isLight ? 'text-purple-600' : 'text-[#00F0FF]'
+                              }`}
                               title={att.name}
                             >
-                              <FileText className="w-3 h-3 shrink-0 text-purple-500" />
+                              <FileText className={`w-3 h-3 shrink-0 ${isLight ? 'text-purple-500' : 'text-[#00F0FF]'}`} />
                               <span className="truncate">{att.name}</span>
-                              <span className="text-[10px] font-mono text-slate-500 shrink-0">
+                              <span className="text-[10px] font-mono text-white/40 shrink-0">
                                 ({formatFileSize(att.size)})
                               </span>
                             </button>
@@ -1559,7 +1493,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                                     a.click();
                                     document.body.removeChild(a);
                                   }}
-                                  className="p-0.5 text-slate-400 hover:text-sky-500"
+                                  className="p-0.5 text-white/40 hover:text-[#00F0FF]"
                                   title="Baixar arquivo"
                                 >
                                   <Download className="w-3 h-3" />
@@ -1568,7 +1502,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleDeleteModuleAttachment(subcategory.id, att.id)}
-                                className="text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer transition"
+                                className="text-white/40 hover:text-rose-400 p-0.5 cursor-pointer transition"
                                 title="Remover anexo"
                               >
                                 <Trash2 className="w-3 h-3" />
@@ -1581,8 +1515,8 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                   </div>
 
                   {/* Module Notes & Abatement Badges Section */}
-                  <div className={`mt-3 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-slate-800/80'}`}>
-                    <div className="flex items-center justify-between text-xs mb-1">
+                  <div className={`mt-3 pt-2 border-t ${isLight ? 'border-slate-200/90' : 'border-white/10'}`}>
+                    <div className="flex items-center justify-between text-xs mb-1 font-mono">
                       <button
                         type="button"
                         onClick={() =>
@@ -1591,23 +1525,25 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                             [subcategory.id]: !isNotesExpanded,
                           }))
                         }
-                        className={`text-[11px] font-medium flex items-center gap-1 cursor-pointer transition ${
-                          isLight ? 'text-slate-700 hover:text-sky-800' : 'text-slate-300 hover:text-white'
+                        className={`text-[11px] flex items-center gap-1 cursor-pointer transition ${
+                          isLight ? 'text-slate-700 hover:text-sky-800 font-medium' : 'text-white/80 hover:text-[#00F0FF]'
                         }`}
                       >
-                        <FileText className="w-3 h-3 text-amber-500" />
+                        <FileText className={`w-3 h-3 ${isLight ? 'text-amber-500' : 'text-[#00F0FF]'}`} />
                         <span>Anotações & Abatimentos ({moduleNotes.length})</span>
                         {isNotesExpanded ? (
-                          <ChevronDown className="w-3 h-3 text-slate-400" />
+                          <ChevronDown className="w-3 h-3 text-white/40" />
                         ) : (
-                          <ChevronRight className="w-3 h-3 text-slate-400" />
+                          <ChevronRight className="w-3 h-3 text-white/40" />
                         )}
                       </button>
 
                       <button
                         type="button"
                         onClick={() => openQuickNoteModal(subcategory)}
-                        className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-0.5 cursor-pointer font-bold"
+                        className={`text-[11px] flex items-center gap-0.5 cursor-pointer font-mono font-bold ${
+                          isLight ? 'text-amber-600 hover:underline' : 'text-[#00F0FF] hover:underline'
+                        }`}
                         title="Escrever anotação e abater % da carga horária"
                       >
                         <Plus className="w-3 h-3" /> Anotar (+%)
@@ -1619,28 +1555,32 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                         {moduleNotes.map((nt) => (
                           <div
                             key={nt.id}
-                            className={`p-2 rounded-lg border text-xs space-y-1 ${
+                            className={`p-2 border text-xs font-mono space-y-1 ${
                               isLight
-                                ? 'bg-white/90 border-slate-200 text-slate-800 shadow-2xs'
-                                : 'bg-slate-950/80 border-slate-800/90 text-slate-200'
+                                ? 'bg-white/90 border-slate-200 text-slate-800 shadow-2xs rounded-lg'
+                                : 'bg-[#0C0C0E] border-white/10 text-white'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-1">
                               <span className="font-bold truncate text-[11px]">{nt.title}</span>
                               <div className="flex items-center gap-1 shrink-0">
                                 {nt.studyPercent && (
-                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                  <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono font-bold border ${
+                                    isLight
+                                      ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30'
+                                      : 'bg-[#00F0FF]/15 text-[#00F0FF] border-[#00F0FF]/40'
+                                  }`}>
                                     +{nt.studyPercent}%
                                   </span>
                                 )}
                                 {nt.studyHours && (
-                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30">
+                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-white/10 text-white/70 border border-white/10">
                                     {nt.studyHours}h
                                   </span>
                                 )}
                               </div>
                             </div>
-                            <p className={`text-[10px] line-clamp-2 leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                            <p className={`text-[10px] line-clamp-2 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                               {nt.content}
                             </p>
                           </div>
@@ -1651,17 +1591,17 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                 </div>
 
                 {/* Card Footer Actions */}
-                <div className={`mt-4 pt-3 border-t flex items-center justify-between gap-1.5 text-xs ${
-                  isLight ? 'border-slate-200/90' : 'border-slate-800/80'
+                <div className={`mt-4 pt-3 border-t flex items-center justify-between gap-1.5 text-xs font-mono ${
+                  isLight ? 'border-slate-200/90' : 'border-white/10'
                 }`}>
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => openQuickNoteModal(subcategory)}
-                      className="btn-3d-amber px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-xs"
+                      className={isLight ? 'btn-3d-amber px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-xs' : 'btn-tech text-[10px] px-2.5 py-1 flex items-center gap-1'}
                       title="Adicionar anotação com horas e abatimento de percentual"
                     >
-                      <FileText className="w-3.5 h-3.5 text-amber-200" />
+                      <FileText className="w-3.5 h-3.5" />
                       Anotar (+%)
                     </button>
 
@@ -1669,10 +1609,10 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                       <button
                         type="button"
                         onClick={() => onStartPomodoroForTrack(track.title, subcategory.title)}
-                        className="btn-3d-primary px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-xs"
+                        className={isLight ? 'btn-3d-primary px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-xs' : 'btn-tech-subtle text-[10px] px-2.5 py-1 flex items-center gap-1'}
                         title="Focar com Pomodoro neste módulo"
                       >
-                        <Timer className="w-3 h-3" />
+                        <Timer className="w-3 h-3 text-[#00F0FF]" />
                         Pomodoro
                       </button>
                     )}
@@ -1681,14 +1621,10 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                       <button
                         type="button"
                         onClick={() => onOpenNotesForModule(track.id, subcategory.id)}
-                        className={`px-2 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer transition ${
-                          isLight
-                            ? 'bg-white hover:bg-sky-50 text-slate-800 border border-slate-300 shadow-2xs'
-                            : 'btn-3d-dark text-slate-300 hover:text-white'
-                        }`}
+                        className={isLight ? 'px-2 py-1 rounded text-xs font-semibold flex items-center gap-1 cursor-pointer transition bg-white hover:bg-sky-50 text-slate-800 border border-slate-300 shadow-2xs' : 'btn-tech-subtle text-[10px] px-2 py-1 flex items-center gap-1'}
                         title="Ver todas as anotações no Bloco de Notas"
                       >
-                        <MessageSquare className="w-3 h-3 text-sky-500" />
+                        <MessageSquare className="w-3 h-3 text-[#00F0FF]" />
                         Ver Notas
                       </button>
                     )}
@@ -1702,11 +1638,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                         setItemToEdit(null);
                         setIsItemModalOpen(true);
                       }}
-                      className={`p-1.5 rounded-lg border text-xs cursor-pointer transition ${
-                        isLight
-                          ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
-                          : 'btn-3d-dark text-slate-300 hover:text-white'
-                      }`}
+                      className={isLight ? 'p-1.5 rounded-lg border text-xs cursor-pointer transition bg-white hover:bg-slate-100 border-slate-200 text-slate-700' : 'btn-tech-subtle p-1.5'}
                       title="Adicionar Novo Tópico"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -2502,29 +2434,38 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
 
       {/* Quick Workload & Hours Modal */}
       {quickHoursModalSub && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fadeIn">
           <div
-            className={`w-full max-w-md rounded-2xl border p-5 shadow-2xl space-y-4 ${
-              isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0d1c34] border-slate-700 text-white'
+            className={`w-full max-w-md border-[1.5px] p-5 shadow-2xl space-y-4 ${
+              isLight
+                ? 'rounded-2xl border-slate-200 bg-white text-slate-900'
+                : 'border-[#00F0FF]/40 bg-[#141417] text-white font-mono'
             }`}
           >
-            <div className="flex items-center justify-between border-b pb-3">
+            <div className={`flex items-center justify-between border-b pb-3 ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
               <div>
-                <h3 className="text-base font-bold">Carga Horária & Meta do Módulo</h3>
-                <p className="text-xs text-slate-500 mt-0.5">{quickHoursModalSub.title}</p>
+                <span className="label-tech">CONFIG_HOURS // WORKLOAD</span>
+                <h3 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white font-[\'Syne\',sans-serif]'}`}>
+                  Carga Horária & Meta do Módulo
+                </h3>
+                <p className={`text-xs mt-0.5 font-mono ${isLight ? 'text-slate-500' : 'text-[#00F0FF]'}`}>
+                  {quickHoursModalSub.title}
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setQuickHoursModalSub(null)}
-                className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded cursor-pointer"
+                className={`text-xs px-2 py-1 cursor-pointer transition ${
+                  isLight ? 'text-slate-400 hover:text-slate-700' : 'text-white/50 hover:text-[#00F0FF]'
+                }`}
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveQuickHours} className="space-y-3.5">
+            <form onSubmit={handleSaveQuickHours} className="space-y-3.5 font-mono">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                <label className={isLight ? 'block text-xs font-semibold text-slate-700 mb-1' : 'label-tech block mb-1 text-white/70'}>
                   Carga Horária Total Prevista (horas)
                 </label>
                 <input
@@ -2533,16 +2474,18 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                   step="0.5"
                   value={quickHoursEst}
                   onChange={(e) => setQuickHoursEst(Number(e.target.value))}
-                  className={`w-full px-3 py-2 rounded-lg text-sm border ${
-                    isLight ? 'bg-slate-50 border-slate-300' : 'bg-slate-900 border-slate-700'
+                  className={`w-full px-3 py-2 text-xs font-mono border ${
+                    isLight
+                      ? 'bg-slate-50 border-slate-300 text-slate-900 rounded-lg'
+                      : 'bg-[#0C0C0E] border-white/20 text-white focus:border-[#00F0FF] outline-none'
                   }`}
                   required
                 />
-                <span className="text-[10px] text-slate-500">Ex: 40h para um curso completo.</span>
+                <span className="text-[10px] text-white/40 font-mono mt-0.5 block">Ex: 40h para um curso completo.</span>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                <label className={isLight ? 'block text-xs font-semibold text-slate-700 mb-1' : 'label-tech block mb-1 text-white/70'}>
                   Horas Estudadas até Agora (horas)
                 </label>
                 <input
@@ -2557,14 +2500,16 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                       setQuickHoursPercent(Math.min(100, Math.round((spent / quickHoursEst) * 100)));
                     }
                   }}
-                  className={`w-full px-3 py-2 rounded-lg text-sm border ${
-                    isLight ? 'bg-slate-50 border-slate-300' : 'bg-slate-900 border-slate-700'
+                  className={`w-full px-3 py-2 text-xs font-mono border ${
+                    isLight
+                      ? 'bg-slate-50 border-slate-300 text-slate-900 rounded-lg'
+                      : 'bg-[#0C0C0E] border-white/20 text-white focus:border-[#00F0FF] outline-none'
                   }`}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                <label className={isLight ? 'block text-xs font-semibold text-slate-700 mb-1' : 'label-tech block mb-1 text-white/70'}>
                   Percentual de Conclusão (%)
                 </label>
                 <div className="flex items-center gap-2">
@@ -2574,21 +2519,23 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                     max="100"
                     value={quickHoursPercent}
                     onChange={(e) => setQuickHoursPercent(Number(e.target.value))}
-                    className="flex-1 accent-sky-500"
+                    className="flex-1 accent-[#00F0FF]"
                   />
-                  <span className="w-12 text-right font-mono font-bold text-sm">{quickHoursPercent}%</span>
+                  <span className="w-12 text-right font-mono font-bold text-sm text-[#00F0FF]">{quickHoursPercent}%</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                <label className={isLight ? 'block text-xs font-semibold text-slate-700 mb-1' : 'label-tech block mb-1 text-white/70'}>
                   Status do Módulo
                 </label>
                 <select
                   value={quickHoursStatus}
                   onChange={(e) => setQuickHoursStatus(e.target.value as CertStatus)}
-                  className={`w-full px-3 py-2 rounded-lg text-sm border ${
-                    isLight ? 'bg-slate-50 border-slate-300' : 'bg-slate-900 border-slate-700'
+                  className={`w-full px-3 py-2 text-xs font-mono border ${
+                    isLight
+                      ? 'bg-slate-50 border-slate-300 text-slate-900 rounded-lg'
+                      : 'bg-[#0C0C0E] border-white/20 text-[#00F0FF] focus:border-[#00F0FF] outline-none'
                   }`}
                 >
                   <option value="Planejada">Planejada</option>
@@ -2597,17 +2544,17 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t">
+              <div className={`flex items-center justify-end gap-2 pt-2 border-t ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
                 <button
                   type="button"
                   onClick={() => setQuickHoursModalSub(null)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white cursor-pointer"
+                  className={isLight ? 'px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer' : 'btn-tech-subtle px-3 py-1.5 text-xs'}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="btn-3d-primary px-4 py-1.5 rounded-lg text-xs font-bold cursor-pointer"
+                  className={isLight ? 'btn-3d-primary px-4 py-1.5 rounded-lg text-xs font-bold cursor-pointer' : 'btn-tech px-4 py-1.5 text-xs'}
                 >
                   Salvar Carga Horária
                 </button>
@@ -2619,34 +2566,39 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
 
       {/* Quick Note with Percentage Abatement Modal */}
       {quickNoteModalSub && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fadeIn">
           <div
-            className={`w-full max-w-lg rounded-2xl border p-5 shadow-2xl space-y-4 ${
-              isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0d1c34] border-slate-700 text-white'
+            className={`w-full max-w-lg border-[1.5px] p-5 shadow-2xl space-y-4 ${
+              isLight
+                ? 'rounded-2xl border-slate-200 bg-white text-slate-900'
+                : 'border-[#00F0FF]/40 bg-[#141417] text-white font-mono'
             }`}
           >
-            <div className="flex items-center justify-between border-b pb-3">
+            <div className={`flex items-center justify-between border-b pb-3 ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
               <div>
-                <h3 className="text-base font-bold flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-amber-500" />
+                <span className="label-tech">NOTE_LOG // HOURS_ABATEMENT</span>
+                <h3 className={`text-base font-bold flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-white font-[\'Syne\',sans-serif]'}`}>
+                  <FileText className="w-4 h-4 text-[#00F0FF]" />
                   Anotação & Abatimento de Carga Horária
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Módulo: <span className="font-semibold text-sky-500">{quickNoteModalSub.title}</span> · Meta: {quickNoteModalSub.hoursSpent || 0}h/{quickNoteModalSub.estimatedHours || 40}h ({quickNoteModalSub.completedPercent || 0}%)
+                <p className={`text-xs mt-0.5 font-mono ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+                  Módulo: <span className="font-semibold text-[#00F0FF]">{quickNoteModalSub.title}</span> · Meta: {quickNoteModalSub.hoursSpent || 0}h/{quickNoteModalSub.estimatedHours || 40}h ({quickNoteModalSub.completedPercent || 0}%)
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setQuickNoteModalSub(null)}
-                className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded cursor-pointer"
+                className={`text-xs px-2 py-1 cursor-pointer transition ${
+                  isLight ? 'text-slate-400 hover:text-slate-700' : 'text-white/50 hover:text-[#00F0FF]'
+                }`}
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveQuickNote} className="space-y-3.5">
+            <form onSubmit={handleSaveQuickNote} className="space-y-3.5 font-mono">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                <label className={isLight ? 'block text-xs font-semibold text-slate-700 mb-1' : 'label-tech block mb-1 text-white/70'}>
                   Título da Anotação
                 </label>
                 <input
@@ -2654,15 +2606,17 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                   value={quickNoteTitle}
                   onChange={(e) => setQuickNoteTitle(e.target.value)}
                   placeholder="Ex: Resumo Aula 03 - Riscos de IA e Governança"
-                  className={`w-full px-3 py-2 rounded-lg text-sm border ${
-                    isLight ? 'bg-slate-50 border-slate-300' : 'bg-slate-900 border-slate-700'
+                  className={`w-full px-3 py-2 text-xs font-mono border ${
+                    isLight
+                      ? 'bg-slate-50 border-slate-300 text-slate-900 rounded-lg'
+                      : 'bg-[#0C0C0E] border-white/20 text-white focus:border-[#00F0FF] outline-none'
                   }`}
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                <label className={isLight ? 'block text-xs font-semibold text-slate-700 mb-1' : 'label-tech block mb-1 text-white/70'}>
                   Conteúdo / Conceitos / Notas de Aula
                 </label>
                 <textarea
@@ -2670,16 +2624,20 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                   value={quickNoteContent}
                   onChange={(e) => setQuickNoteContent(e.target.value)}
                   placeholder="Escreva seus aprendizados, insights, referências da aula..."
-                  className={`w-full px-3 py-2 rounded-lg text-xs font-mono border ${
-                    isLight ? 'bg-slate-50 border-slate-300' : 'bg-slate-900 border-slate-700'
+                  className={`w-full px-3 py-2 text-xs font-mono border ${
+                    isLight
+                      ? 'bg-slate-50 border-slate-300 text-slate-900 rounded-lg'
+                      : 'bg-[#0C0C0E] border-white/20 text-white focus:border-[#00F0FF] outline-none'
                   }`}
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border bg-slate-500/5">
+              <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 border ${
+                isLight ? 'bg-slate-50 border-slate-200 rounded-xl' : 'bg-[#0C0C0E] border-white/10'
+              }`}>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">
+                  <label className={isLight ? 'block text-xs font-semibold text-slate-700 mb-1' : 'label-tech block mb-1 text-white/70'}>
                     Horas Estudadas nesta Anotação
                   </label>
                   <input
@@ -2696,15 +2654,17 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                       }
                     }}
                     placeholder="Ex: 2 (horas)"
-                    className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono border ${
-                      isLight ? 'bg-white border-slate-300' : 'bg-slate-900 border-slate-700'
+                    className={`w-full px-3 py-1.5 text-xs font-mono border ${
+                      isLight
+                        ? 'bg-white border-slate-300 text-slate-900 rounded-lg'
+                        : 'bg-[#141417] border-white/20 text-white focus:border-[#00F0FF] outline-none'
                     }`}
                   />
-                  <span className="text-[10px] text-slate-500">Soma nas estatísticas semanais</span>
+                  <span className="text-[10px] text-white/40 block mt-0.5">// Soma nas horas do módulo</span>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">
+                  <label className={isLight ? 'block text-xs font-semibold text-slate-700 mb-1' : 'label-tech block mb-1 text-white/70'}>
                     % Abatido do Módulo
                   </label>
                   <input
@@ -2717,11 +2677,13 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                       setQuickNotePercent(e.target.value === '' ? '' : Number(e.target.value));
                     }}
                     placeholder="Ex: 15 (%)"
-                    className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono border ${
-                      isLight ? 'bg-white border-slate-300' : 'bg-slate-900 border-slate-700'
+                    className={`w-full px-3 py-1.5 text-xs font-mono border ${
+                      isLight
+                        ? 'bg-white border-slate-300 text-slate-900 rounded-lg'
+                        : 'bg-[#141417] border-white/20 text-[#00F0FF] focus:border-[#00F0FF] outline-none'
                     }`}
                   />
-                  <div className="flex items-center gap-1 mt-1">
+                  <div className="flex items-center gap-1 mt-1.5">
                     {[10, 20, 25, 50, 100].map((pct) => (
                       <button
                         key={pct}
@@ -2730,7 +2692,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
                           setQuickNoteAutoPercent(false);
                           setQuickNotePercent(pct);
                         }}
-                        className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-sky-500/10 text-sky-500 hover:bg-sky-500/20 cursor-pointer"
+                        className={isLight ? 'px-1.5 py-0.5 rounded text-[10px] font-mono bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 cursor-pointer' : 'btn-tech-subtle text-[10px] px-1.5 py-0.5'}
                       >
                         +{pct}%
                       </button>
@@ -2740,29 +2702,31 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
               </div>
 
               {/* Dynamic live calculation preview */}
-              <div className="p-3 rounded-xl border border-sky-400/40 bg-sky-500/10 text-xs">
-                <span className="font-semibold text-sky-400 block mb-0.5">Impacto no Módulo:</span>
+              <div className={`p-3 border text-xs font-mono ${
+                isLight ? 'bg-sky-50 border-sky-300 text-slate-800 rounded-xl' : 'bg-[#00F0FF]/5 border-[#00F0FF]/30 text-white/80'
+              }`}>
+                <span className="font-bold text-[#00F0FF] block mb-0.5">// IMPACTO_NO_MÓDULO:</span>
                 <span>
-                  O módulo avançará de <strong>{quickNoteModalSub.completedPercent || 0}%</strong> para{' '}
-                  <strong className="text-emerald-400">
+                  O módulo avançará de <strong className="text-white">{quickNoteModalSub.completedPercent || 0}%</strong> para{' '}
+                  <strong className="text-[#00F0FF]">
                     {Math.min(100, (quickNoteModalSub.completedPercent || 0) + (Number(quickNotePercent) || 0))}%
                   </strong>{' '}
                   (+{Number(quickNotePercent) || 0}%) e somará{' '}
-                  <strong>{Number(quickNoteHours) || 0}h</strong> às {quickNoteModalSub.hoursSpent || 0}h já estudadas.
+                  <strong className="text-white">{Number(quickNoteHours) || 0}h</strong> às {quickNoteModalSub.hoursSpent || 0}h já estudadas.
                 </span>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t">
+              <div className={`flex items-center justify-end gap-2 pt-2 border-t ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
                 <button
                   type="button"
                   onClick={() => setQuickNoteModalSub(null)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white cursor-pointer"
+                  className={isLight ? 'px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer' : 'btn-tech-subtle px-3 py-1.5 text-xs'}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="btn-3d-amber px-4 py-1.5 rounded-lg text-xs font-bold shadow-md cursor-pointer"
+                  className={isLight ? 'btn-3d-amber px-4 py-1.5 rounded-lg text-xs font-bold shadow-md cursor-pointer' : 'btn-tech px-4 py-1.5 text-xs'}
                 >
                   Salvar Anotação e Abater %
                 </button>
