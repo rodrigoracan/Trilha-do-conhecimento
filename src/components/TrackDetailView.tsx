@@ -53,6 +53,7 @@ import { AttachDocumentModal } from './AttachDocumentModal';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { TrackScheduleSection } from './TrackScheduleSection';
 import { TrackPerformanceDashboard } from './TrackPerformanceDashboard';
+import { TrackModulesD3Chart } from './TrackModulesD3Chart';
 import { GoogleGeminiLogo, NotebookLMLogo } from './Logos';
 
 interface TrackDetailViewProps {
@@ -94,6 +95,7 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
   const [expandedGridTopics, setExpandedGridTopics] = useState<Record<string, boolean>>({});
   const [expandedGridNotes, setExpandedGridNotes] = useState<Record<string, boolean>>({});
   const [openDropdownSubId, setOpenDropdownSubId] = useState<string | null>(null);
+  const [showHoursChart, setShowHoursChart] = useState<boolean>(true);
 
   // Quick Hours & Workload Modal state
   const [quickHoursModalSub, setQuickHoursModalSub] = useState<TrackSubcategory | null>(null);
@@ -217,15 +219,16 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
     setIsAttachDocModalOpen(true);
   };
 
-  const handleSaveModuleAttachment = (attachment: TrackAttachment) => {
+  const handleSaveModuleAttachment = (attachment: TrackAttachment | TrackAttachment[]) => {
     if (!activeModuleForDoc) return;
+    const newItems = Array.isArray(attachment) ? attachment : [attachment];
 
     const updatedSubcategories = track.subcategories.map((sub) => {
       if (sub.id !== activeModuleForDoc.id) return sub;
       const currentAttachments = sub.attachments || [];
       return {
         ...sub,
-        attachments: [attachment, ...currentAttachments],
+        attachments: [...newItems, ...currentAttachments],
       };
     });
 
@@ -503,15 +506,32 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
 
   const subsCount = track.subcategories?.length || 0;
   const progressPercentage = subsCount > 0
-    ? Math.round(
-        track.subcategories.reduce((acc, sub) => {
-          if (sub.completedPercent !== undefined && sub.completedPercent !== null) {
-            return acc + sub.completedPercent;
-          }
-          const subTotal = sub.items?.length || 0;
-          const subDone = sub.items?.filter((i) => i.status === 'Concluído').length || 0;
-          return acc + (subTotal > 0 ? Math.round((subDone / subTotal) * 100) : 0);
-        }, 0) / subsCount
+    ? Math.min(
+        100,
+        Math.round(
+          track.subcategories.reduce((acc, sub) => {
+            const subNotes = trackNotes.filter((n) => n.subcategoryId === sub.id);
+            const notesPctTotal = subNotes.reduce((sum, n) => sum + (n.studyPercent || 0), 0);
+            const notesHrsTotal = subNotes.reduce((sum, n) => sum + (n.studyHours || 0), 0);
+            const effHours = Math.max(sub.hoursSpent || 0, notesHrsTotal);
+            const est = sub.estimatedHours || 40;
+            const hrsPct = est > 0 ? Math.round((effHours / est) * 100) : 0;
+            const subTotal = sub.items?.length || 0;
+            const subDone = sub.items?.filter((i) => i.status === 'Concluído').length || 0;
+            const itemsPct = subTotal > 0 ? Math.round((subDone / subTotal) * 100) : 0;
+
+            const modPct = Math.min(
+              100,
+              Math.max(
+                sub.completedPercent ?? 0,
+                hrsPct,
+                notesPctTotal,
+                itemsPct
+              )
+            );
+            return acc + modPct;
+          }, 0) / subsCount
+        )
       )
     : 0;
 
@@ -1189,6 +1209,25 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
             </>
           )}
 
+          {/* Toggle D3 Hours Chart Button */}
+          <button
+            type="button"
+            onClick={() => setShowHoursChart((prev) => !prev)}
+            className={`px-3 py-1 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border ${
+              showHoursChart
+                ? isLight
+                  ? 'bg-sky-600 text-white border-sky-700 shadow-xs'
+                  : 'bg-[#00F0FF] text-[#0C0C0E] border-[#00F0FF] font-bold shadow-[0_0_10px_rgba(0,240,255,0.4)]'
+                : isLight
+                ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
+                : 'btn-tech-subtle'
+            }`}
+            title="Alternar exibição do gráfico D3 de carga horária e ritmo dos módulos"
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span>Gráfico D3 ({showHoursChart ? 'Aberto' : 'Oculto'})</span>
+          </button>
+
           <button
             onClick={() => {
               setSubcategoryToEdit(null);
@@ -1201,6 +1240,17 @@ export const TrackDetailView: React.FC<TrackDetailViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* D3 WORKLOAD & MODULES EVOLUTION CHART */}
+      {showHoursChart && (
+        <TrackModulesD3Chart
+          trackTitle={track.title}
+          subcategories={track.subcategories || []}
+          notes={trackNotes}
+          onClose={() => setShowHoursChart(false)}
+          theme={theme}
+        />
+      )}
 
       {/* RENDER VIEW: QUADROS (BLOCOS) IDENTICAL TO CERTIFICAÇÕES DE TI */}
       {modulesLayout === 'blocks' ? (

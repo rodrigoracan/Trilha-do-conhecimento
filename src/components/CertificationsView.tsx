@@ -327,25 +327,27 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
             ))}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 font-mono">
             <button
               onClick={() => setShowHoursChart((prev) => !prev)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs ${
+              className={`px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border ${
                 showHoursChart
-                  ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                  ? isLight
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'bg-[#00F0FF] text-[#0C0C0E] border-[#00F0FF] shadow-[0_0_10px_rgba(0,240,255,0.4)]'
                   : isLight
-                  ? 'bg-white hover:bg-slate-100 text-slate-700'
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                  ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
+                  : 'btn-tech-subtle'
               }`}
               title="Alternar exibição do gráfico D3 de carga horária das certificações"
             >
               <BarChart3 className="w-3.5 h-3.5" />
-              <span>{showHoursChart ? 'Ocultar Gráfico D3' : 'Ver Gráfico D3'}</span>
+              <span>{showHoursChart ? 'Gráfico D3 (Aberto)' : 'Gráfico D3 (Oculto)'}</span>
             </button>
 
             <button
               onClick={onOpenCreateModal}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap bg-teal-600 hover:bg-teal-700 text-white shadow-xs transition"
+              className={isLight ? 'px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap bg-teal-600 hover:bg-teal-700 text-white shadow-xs transition' : 'btn-tech px-3 py-1.5 text-xs'}
             >
               <Plus className="w-4 h-4" />
               Novo Módulo
@@ -358,6 +360,7 @@ export const CertificationsView: React.FC<CertificationsViewProps> = ({
       {showHoursChart && (
         <CertificationHoursD3Chart
           certifications={certifications}
+          onClose={() => setShowHoursChart(false)}
           theme={theme}
         />
       )}

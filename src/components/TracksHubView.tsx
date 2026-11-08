@@ -115,10 +115,30 @@ export const TracksHubView: React.FC<TracksHubViewProps> = ({
             });
           }
 
-          const progressPercentage =
-            totalItemsCount > 0
+          // Compute realistic evolution percentage factoring completedPercent, items, and workload
+          let progressPercentage = 0;
+          if (isCertHub) {
+            progressPercentage = totalItemsCount > 0
               ? Math.round((completedItemsCount / totalItemsCount) * 100)
               : 0;
+          } else if (subcategoriesCount > 0) {
+            const sumPercents = (track.subcategories || []).reduce((acc, sub) => {
+              const subItems = sub.items?.length || 0;
+              const subDone = sub.items?.filter((i) => i.status === 'Concluído').length || 0;
+              const itemsPct = subItems > 0 ? Math.round((subDone / subItems) * 100) : 0;
+              const hoursPct = sub.estimatedHours && sub.estimatedHours > 0
+                ? Math.round(((sub.hoursSpent || 0) / sub.estimatedHours) * 100)
+                : 0;
+              const modPercent = Math.min(
+                100,
+                Math.max(sub.completedPercent || 0, hoursPct, itemsPct)
+              );
+              return acc + modPercent;
+            }, 0);
+            progressPercentage = Math.min(100, Math.round(sumPercents / subcategoriesCount));
+          } else if (totalItemsCount > 0) {
+            progressPercentage = Math.round((completedItemsCount / totalItemsCount) * 100);
+          }
 
           const secCode = getTechSectionId(idx);
           const techId = getTechId(track.slug, idx);

@@ -9,11 +9,13 @@ import {
   ArrowUpDown,
   Filter,
   Sparkles,
-  Info
+  Info,
+  X
 } from 'lucide-react';
 
 interface CertificationHoursD3ChartProps {
   certifications: Certification[];
+  onClose?: () => void;
   theme?: 'light' | 'dark';
 }
 
@@ -22,6 +24,7 @@ type ChartMode = 'grouped' | 'bullet';
 
 export const CertificationHoursD3Chart: React.FC<CertificationHoursD3ChartProps> = ({
   certifications,
+  onClose,
   theme = 'light',
 }) => {
   const isLight = theme === 'light';
@@ -538,20 +541,22 @@ export const CertificationHoursD3Chart: React.FC<CertificationHoursD3ChartProps>
   return (
     <div
       ref={containerRef}
-      className={`rounded-2xl border-2 p-4 sm:p-5 transition-all duration-200 relative select-none ${
+      className={`p-4 sm:p-5 transition-all duration-200 relative select-none animate-fadeIn ${
         isLight
-          ? 'bg-gradient-to-br from-white via-indigo-50/30 to-sky-50/40 border-indigo-300 shadow-xl shadow-indigo-950/5'
-          : 'bg-gradient-to-br from-[#0c142e] via-[#101938] to-[#0c142e] border-indigo-500/60 shadow-2xl shadow-black/60'
+          ? 'rounded-2xl bg-white border-2 border-indigo-300 shadow-xl'
+          : 'technical-card border-[1.5px] border-[#00F0FF]/40 bg-[#141417] shadow-[0_4px_30px_rgba(0,0,0,0.7)]'
       }`}
     >
       {/* Header and Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-indigo-200/70 dark:border-indigo-900/60">
+      <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b-[1.5px] ${
+        isLight ? 'border-indigo-200/70' : 'border-[#00F0FF]/25'
+      }`}>
         <div className="flex items-center gap-3">
           <div
-            className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center shrink-0 shadow-md ${
+            className={`w-9 h-9 border flex items-center justify-center shrink-0 ${
               isLight
-                ? 'bg-indigo-600 border-indigo-400 text-white shadow-indigo-600/30'
-                : 'bg-indigo-500 border-indigo-300 text-white shadow-indigo-500/40'
+                ? 'bg-indigo-600 border-indigo-400 text-white'
+                : 'bg-[#0C0C0E] border-[#00F0FF]/40 text-[#00F0FF] shadow-[0_0_12px_rgba(0,240,255,0.25)]'
             }`}
           >
             <BarChart3 className="w-5 h-5" />
@@ -645,6 +650,18 @@ export const CertificationHoursD3Chart: React.FC<CertificationHoursD3ChartProps>
               ))}
             </select>
           </div>
+
+          {/* Close Button */}
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 border border-[#00F0FF]/30 hover:border-rose-400 text-white/50 hover:text-rose-400 bg-[#0C0C0E] cursor-pointer transition ml-1"
+              title="Fechar gráfico de carga horária"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 

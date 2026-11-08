@@ -85,20 +85,23 @@ export const NotesView: React.FC<NotesViewProps> = ({
   }, [selectedTrackId, selectedSubcategoryId]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setIsUploadingFile(true);
     try {
-      const resource = await saveFileToIndexedDB(
-        file,
-        certId || trackId || 'geral',
-        `Anexo do Bloco de Notas: ${file.name}`
+      const uploadPromises = Array.from(files).map((file) =>
+        saveFileToIndexedDB(
+          file,
+          certId || trackId || 'geral',
+          `Anexo do Bloco de Notas: ${file.name}`
+        )
       );
-      setAttachedFiles((prev) => [...prev, resource]);
+      const newResources = await Promise.all(uploadPromises);
+      setAttachedFiles((prev) => [...prev, ...newResources]);
     } catch (err) {
-      console.error('Erro ao anexar arquivo no banco:', err);
-      alert('Não foi possível salvar o arquivo no banco de dados.');
+      console.error('Erro ao anexar arquivos no banco:', err);
+      alert('Não foi possível salvar os arquivos no banco de dados.');
     } finally {
       setIsUploadingFile(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -526,6 +529,7 @@ export const NotesView: React.FC<NotesViewProps> = ({
                 <input
                   ref={fileInputRef}
                   type="file"
+                  multiple
                   className="hidden"
                   onChange={handleFileUpload}
                 />

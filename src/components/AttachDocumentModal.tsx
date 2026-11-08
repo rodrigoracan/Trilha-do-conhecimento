@@ -15,8 +15,16 @@ interface AttachDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
   moduleTitle: string;
-  onSaveAttachment: (attachment: TrackAttachment) => void;
+  onSaveAttachment: (attachment: TrackAttachment | TrackAttachment[]) => void;
   theme?: 'light' | 'dark';
+}
+
+interface LoadedFileItem {
+  file: File;
+  name: string;
+  size: number;
+  type: string;
+  dataUrl?: string;
 }
 
 export const AttachDocumentModal: React.FC<AttachDocumentModalProps> = ({
@@ -33,74 +41,81 @@ export const AttachDocumentModal: React.FC<AttachDocumentModalProps> = ({
   const [docName, setDocName] = useState('');
   const [docUrl, setDocUrl] = useState('');
   const [notes, setNotes] = useState('');
-  const [selectedFile, setSelectedFile] = useState<{
-    file: File;
-    name: string;
-    size: number;
-    type: string;
-    dataUrl?: string;
-  } | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<LoadedFileItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   if (!isOpen) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // Limit to reasonable in-browser size (e.g. 15MB)
-    if (file.size > 15 * 1024 * 1024) {
-      setErrorMessage('O arquivo excede o limite de 15MB para armazenamento no navegador.');
+    // Check size limit for each
+    const tooLarge = Array.from(files).find((f) => f.size > 15 * 1024 * 1024);
+    if (tooLarge) {
+      setErrorMessage(`O arquivo "${tooLarge.name}" excede o limite de 15MB para armazenamento.`);
       return;
     }
 
     setErrorMessage('');
-    const reader = new FileReader();
     setIsLoading(true);
 
-    reader.onload = () => {
-      setSelectedFile({
-        file,
-        name: file.name,
-        size: file.size,
-        type: file.type || file.name.split('.').pop() || 'file',
-        dataUrl: reader.result as string,
+    const readers = Array.from(files).map((file) => {
+      return new Promise<LoadedFileItem>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          resolve({
+            file,
+            name: file.name,
+            size: file.size,
+            type: file.type || file.name.split('.').pop() || 'file',
+            dataUrl: reader.result as string,
+          });
+        };
+        reader.onerror = () => reject(new Error(`Erro ao ler ${file.name}`));
+        reader.readAsDataURL(file);
       });
-      if (!docName) {
-        setDocName(file.name);
-      }
-      setIsLoading(false);
-    };
+    });
 
-    reader.onerror = () => {
-      setErrorMessage('Erro ao ler o arquivo selecionado.');
-      setIsLoading(false);
-    };
+    Promise.all(readers)
+      .then((items) => {
+        setSelectedFiles((prev) => [...prev, ...items]);
+        if (!docName && items.length === 1) {
+          setDocName(items[0].name);
+        }
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setErrorMessage('Erro ao ler os arquivos selecionados.');
+        setIsLoading(false);
+      });
+  };
 
-    reader.readAsDataURL(file);
+  const handleRemoveSelectedFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (mode === 'upload') {
-      if (!selectedFile) {
-        setErrorMessage('Por favor, selecione um arquivo para anexar.');
+      if (selectedFiles.length === 0) {
+        setErrorMessage('Por favor, selecione ao menos um arquivo para anexar.');
         return;
       }
 
-      const attachment: TrackAttachment = {
-        id: `att-${Date.now()}`,
-        name: docName.trim() || selectedFile.name,
-        size: selectedFile.size,
-        type: selectedFile.type,
-        dataUrl: selectedFile.dataUrl,
+      const attachments: TrackAttachment[] = selectedFiles.map((item, idx) => ({
+        id: `att-${Date.now()}-${idx}`,
+        name: selectedFiles.length === 1 && docName.trim() ? docName.trim() : item.name,
+        size: item.size,
+        type: item.type,
+        dataUrl: item.dataUrl,
         uploadedAt: new Date().toISOString(),
         notes: notes.trim() || undefined,
-      };
+      }));
 
-      onSaveAttachment(attachment);
+      onSaveAttachment(attachments.length === 1 ? attachments[0] : attachments);
       handleClose();
     } else {
       if (!docUrl.trim()) {
@@ -124,7 +139,7 @@ export const AttachDocumentModal: React.FC<AttachDocumentModalProps> = ({
   };
 
   const handleClose = () => {
-    setSelectedFile(null);
+    setSelectedFiles([]);
     setDocName('');
     setDocUrl('');
     setNotes('');
@@ -225,6 +240,7 @@ export const AttachDocumentModal: React.FC<AttachDocumentModalProps> = ({
               <input
                 ref={fileInputRef}
                 type="file"
+                multiple
                 onChange={handleFileChange}
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.png,.jpg,.jpeg,.zip"
                 className="hidden"
@@ -233,40 +249,60 @@ export const AttachDocumentModal: React.FC<AttachDocumentModalProps> = ({
               {/* Upload Drop Area */}
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className={`p-6 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition ${
-                  selectedFile
-                    ? 'border-emerald-500/70 bg-emerald-500/10'
+                className={`p-5 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition ${
+                  selectedFiles.length > 0
+                    ? 'border-[#00F0FF]/50 bg-[#00F0FF]/5'
                     : isLight
                     ? 'border-slate-300 hover:border-sky-500 bg-slate-50/70 hover:bg-sky-50/50'
-                    : 'border-slate-700 hover:border-sky-500 bg-[#071120] hover:bg-sky-950/20'
+                    : 'border-white/20 hover:border-[#00F0FF] bg-[#071120] hover:bg-[#00F0FF]/10'
                 }`}
               >
-                {selectedFile ? (
-                  <div className="space-y-1.5 flex flex-col items-center">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
-                      <CheckCircle2 className="w-6 h-6" />
-                    </div>
-                    <div className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'} break-all max-w-sm`}>
-                      {selectedFile.name}
-                    </div>
-                    <div className="text-xs text-slate-500 font-mono">
-                      {formatFileSize(selectedFile.size)} • Clique para trocar arquivo
-                    </div>
+                <div className="space-y-1 flex flex-col items-center">
+                  <div className="w-9 h-9 rounded-full bg-[#00F0FF]/15 text-[#00F0FF] flex items-center justify-center mb-1">
+                    <Upload className="w-5 h-5" />
                   </div>
-                ) : (
-                  <div className="space-y-1.5 flex flex-col items-center">
-                    <div className="w-10 h-10 rounded-full bg-sky-500/15 text-sky-500 flex items-center justify-center mb-1">
-                      <Upload className="w-5 h-5" />
-                    </div>
-                    <div className={`font-semibold text-sm ${isLight ? 'text-slate-800' : 'text-white'}`}>
-                      Clique para escolher o arquivo
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      PDF, Word (.docx), Excel (.xlsx), PowerPoint (.pptx), TXT ou Imagens (máx. 15MB)
-                    </p>
+                  <div className={`font-semibold text-sm ${isLight ? 'text-slate-800' : 'text-white'}`}>
+                    Clique para selecionar um ou mais arquivos
                   </div>
-                )}
+                  <p className="text-xs text-slate-400 font-mono">
+                    Selecione múltiplos arquivos juntos (PDF, Word, Excel, TXT, Imagens)
+                  </p>
+                </div>
               </div>
+
+              {/* Selected Files List */}
+              {selectedFiles.length > 0 && (
+                <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                  <div className="text-[11px] font-mono text-[#00F0FF] font-bold">
+                    ARQUIVOS_SELECIONADOS ({selectedFiles.length}):
+                  </div>
+                  {selectedFiles.map((sf, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex items-center justify-between p-2 rounded border text-xs font-mono ${
+                        isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-[#0C0C0E] border-[#00F0FF]/25 text-white/90'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 truncate flex-1 min-w-0 mr-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#00F0FF] shrink-0" />
+                        <span className="truncate font-medium">{sf.name}</span>
+                        <span className="text-[10px] text-white/40 shrink-0">({formatFileSize(sf.size)})</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveSelectedFile(idx);
+                        }}
+                        className="text-white/40 hover:text-rose-400 p-0.5 cursor-pointer transition shrink-0"
+                        title="Remover este arquivo"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-1.5">
@@ -289,22 +325,24 @@ export const AttachDocumentModal: React.FC<AttachDocumentModalProps> = ({
           )}
 
           {/* Document Title / Label */}
-          <div className="space-y-1.5">
-            <label className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-              Título / Nome de Exibição do Documento
-            </label>
-            <input
-              type="text"
-              value={docName}
-              onChange={(e) => setDocName(e.target.value)}
-              placeholder="Ex: Apostila Oficial do Módulo, Slides da Aula, Exercícios Resolvidos"
-              className={`w-full px-3 py-2 rounded-lg text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/30 ${
-                isLight
-                  ? 'bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:border-sky-500'
-                  : 'bg-[#081224] border border-slate-700 text-white focus:border-sky-500'
-              }`}
-            />
-          </div>
+          {selectedFiles.length <= 1 && (
+            <div className="space-y-1.5">
+              <label className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+                Título / Nome de Exibição do Documento {selectedFiles.length === 1 ? '(Opcional)' : ''}
+              </label>
+              <input
+                type="text"
+                value={docName}
+                onChange={(e) => setDocName(e.target.value)}
+                placeholder="Ex: Apostila Oficial do Módulo, Slides da Aula, Exercícios Resolvidos"
+                className={`w-full px-3 py-2 rounded-lg text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/30 ${
+                  isLight
+                    ? 'bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:border-sky-500'
+                    : 'bg-[#081224] border border-slate-700 text-white focus:border-sky-500'
+                }`}
+              />
+            </div>
+          )}
 
           {/* Optional notes */}
           <div className="space-y-1.5">
@@ -337,11 +375,17 @@ export const AttachDocumentModal: React.FC<AttachDocumentModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isLoading || (mode === 'upload' && !selectedFile)}
+              disabled={isLoading || (mode === 'upload' && selectedFiles.length === 0)}
               className="btn-3d-primary px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
             >
               <Upload className="w-3.5 h-3.5" />
-              <span>{isLoading ? 'Carregando...' : 'Anexar Documento'}</span>
+              <span>
+                {isLoading
+                  ? 'Carregando...'
+                  : selectedFiles.length > 1
+                  ? `Anexar ${selectedFiles.length} Documentos`
+                  : 'Anexar Documento'}
+              </span>
             </button>
           </div>
         </form>
