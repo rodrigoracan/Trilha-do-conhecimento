@@ -210,40 +210,39 @@ export default function App() {
             const remoteData = await pullRes.json();
             const remoteCerts = remoteData.certifications || [];
             const remoteNotes = remoteData.notes || [];
+            const localDb = loadDatabase();
 
             if (remoteCerts.length > 0 || remoteNotes.length > 0) {
               // Remote records exist: merge/enrich local database with remote updates
-              setDatabase((prev) => {
-                const mergedCerts = [...prev.certifications];
-                remoteCerts.forEach((rc: any) => {
-                  const idx = mergedCerts.findIndex((c) => c.id === rc.id);
-                  if (idx >= 0) {
-                    mergedCerts[idx] = { ...mergedCerts[idx], ...rc };
-                  } else {
-                    mergedCerts.push(rc);
-                  }
-                });
-
-                const mergedNotes = [...prev.notes];
-                remoteNotes.forEach((rn: any) => {
-                  const idx = mergedNotes.findIndex((n) => n.id === rn.id);
-                  if (idx >= 0) {
-                    mergedNotes[idx] = { ...mergedNotes[idx], ...rn };
-                  } else {
-                    mergedNotes.push(rn);
-                  }
-                });
-
-                const nextDb: AppDatabase = {
-                  ...prev,
-                  certifications: mergedCerts,
-                  notes: mergedNotes,
-                };
-                saveDatabase(nextDb);
-                return nextDb;
+              const mergedCerts = [...localDb.certifications];
+              remoteCerts.forEach((rc: any) => {
+                const idx = mergedCerts.findIndex((c) => c.id === rc.id);
+                if (idx >= 0) {
+                  mergedCerts[idx] = { ...mergedCerts[idx], ...rc };
+                } else {
+                  mergedCerts.push(rc);
+                }
               });
-            } else {
-              // No remote records yet: seed Cloud SQL with initial local data
+
+              const mergedNotes = [...localDb.notes];
+              remoteNotes.forEach((rn: any) => {
+                const idx = mergedNotes.findIndex((n) => n.id === rn.id);
+                if (idx >= 0) {
+                  mergedNotes[idx] = { ...mergedNotes[idx], ...rn };
+                } else {
+                  mergedNotes.push(rn);
+                }
+              });
+
+              const nextDb: AppDatabase = {
+                ...localDb,
+                certifications: mergedCerts,
+                notes: mergedNotes,
+              };
+              setDatabase(nextDb);
+              saveDatabase(nextDb);
+
+              // Sync complete union back to Cloud SQL
               await fetch('/api/cloudsql/sync-all', {
                 method: 'POST',
                 headers: {
@@ -251,9 +250,23 @@ export default function App() {
                   Authorization: `Bearer ${idToken}`,
                 },
                 body: JSON.stringify({
-                  certifications: database.certifications,
-                  notes: database.notes,
-                  studySessions: database.studySessions,
+                  certifications: nextDb.certifications,
+                  notes: nextDb.notes,
+                  studySessions: nextDb.studySessions,
+                }),
+              });
+            } else {
+              // No remote records yet: seed Cloud SQL with current local data
+              await fetch('/api/cloudsql/sync-all', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                  certifications: localDb.certifications,
+                  notes: localDb.notes,
+                  studySessions: localDb.studySessions,
                 }),
               });
             }
@@ -1408,6 +1421,23 @@ export default function App() {
         onUpdateDatabase={(updated) => {
           setDatabase(updated);
           saveDatabase(updated);
+          const user = auth.currentUser;
+          if (user) {
+            user.getIdToken().then((idToken) => {
+              fetch('/api/cloudsql/sync-all', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                  certifications: updated.certifications,
+                  notes: updated.notes,
+                  studySessions: updated.studySessions,
+                }),
+              }).catch(() => {});
+            }).catch(() => {});
+          }
         }}
       />
 

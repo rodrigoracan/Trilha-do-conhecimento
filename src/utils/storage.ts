@@ -241,10 +241,10 @@ export function listAvailableSnapshots(): StorageSnapshotInfo[] {
     'trilha_safety_snapshot',
   ]);
 
-  // Scan all localStorage keys for any other trilha / backup occurrences
+  // Scan all localStorage keys for any backups, previous versions or snapshots
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (k && (k.startsWith('trilha_') || k.startsWith('backup_') || k.includes('trilha'))) {
+    if (k) {
       candidateKeys.add(k);
     }
   }
