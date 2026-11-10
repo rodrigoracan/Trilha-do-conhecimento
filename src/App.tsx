@@ -68,7 +68,9 @@ import {
   User as UserIcon,
   Loader2,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import {
   GoogleDriveLogo,
@@ -161,17 +163,28 @@ export default function App() {
     });
   };
 
+  // Cloud SQL sync status state for real-time visual indicator
+  const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'error'>('synced');
+  const [lastSyncTime, setLastSyncTime] = useState<string>(() => {
+    return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  });
+
   // Cloud SQL background synchronization helper
   const syncWithCloudSQL = async (
     endpoint: string,
     method: 'POST' | 'DELETE',
     body?: any
   ) => {
+    setSyncStatus('syncing');
     try {
       const user = auth.currentUser;
-      if (!user) return;
+      if (!user) {
+        // Local-first: without an active cloud session, data is safely saved locally
+        setSyncStatus('synced');
+        return;
+      }
       const idToken = await user.getIdToken();
-      await fetch(endpoint, {
+      const res = await fetch(endpoint, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -179,8 +192,53 @@ export default function App() {
         },
         body: body ? JSON.stringify(body) : undefined,
       });
-    } catch {
-      // Background operation; offline/local-first fallback intact
+
+      if (!res.ok) {
+        throw new Error(`Sync failed with HTTP ${res.status}`);
+      }
+
+      setSyncStatus('synced');
+      setLastSyncTime(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+    } catch (err) {
+      console.error('Falha na sincronização com Cloud SQL:', err);
+      setSyncStatus('error');
+    }
+  };
+
+  // Manual retry function for user when sync status is 'error'
+  const handleRetrySync = async () => {
+    setSyncStatus('syncing');
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        setIsDatabaseModalOpen(true);
+        setSyncStatus('synced');
+        return;
+      }
+      const idToken = await user.getIdToken();
+      const localDb = loadDatabase();
+      const res = await fetch('/api/cloudsql/sync-all', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          certifications: localDb.certifications,
+          notes: localDb.notes,
+          studySessions: localDb.studySessions,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Retry sync failed with HTTP ${res.status}`);
+      }
+
+      setSyncStatus('synced');
+      setLastSyncTime(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+    } catch (err) {
+      console.error('Erro na nova tentativa de sincronização:', err);
+      setSyncStatus('error');
     }
   };
 
@@ -189,6 +247,7 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
       setCurrentUser(user);
       if (user) {
+        setSyncStatus('syncing');
         try {
           const idToken = await user.getIdToken();
           await fetch('/api/auth/sync-user', {
@@ -271,8 +330,11 @@ export default function App() {
               });
             }
           }
-        } catch {
-          // Gracefully continue with client-side state
+          setSyncStatus('synced');
+          setLastSyncTime(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+        } catch (err) {
+          console.error('Falha ao sincronizar inicial com Cloud SQL:', err);
+          setSyncStatus('error');
         }
       }
     });
@@ -1369,12 +1431,61 @@ export default function App() {
       </div>
 
       {/* 4. Bottom Status Bar - Variation 3 */}
-      <footer className="status-bar h-9 shrink-0 bg-[#141417] border-t border-white/10 px-4 sm:px-6 flex items-center justify-between text-xs font-mono text-white/50 z-30 select-none">
-        <div className="label-tech text-white/60">
-          STATUS: <span className="text-emerald-400 font-bold">ONLINE</span> // USER: <span className="text-white font-semibold">{currentUser?.displayName || currentUser?.email || 'Rodrigo Rahal Canado'}</span>
+      <footer className="status-bar min-h-9 py-1 shrink-0 bg-[#141417] border-t border-white/10 px-4 sm:px-6 flex items-center justify-between text-xs font-mono text-white/50 z-30 select-none flex-wrap gap-2">
+        <div className="label-tech text-white/60 flex items-center flex-wrap gap-2.5">
+          {/* Status Online */}
+          <div className="flex items-center gap-1.5">
+            STATUS: <span className="text-emerald-400 font-bold">ONLINE</span>
+          </div>
+
+          <span className="text-white/20">//</span>
+
+          {/* Estado de Sincronização SQL */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-white/40">SQL:</span>
+            {syncStatus === 'syncing' && (
+              <span className="inline-flex items-center gap-1.5 text-[#00F0FF] font-bold bg-[#00F0FF]/10 px-2 py-0.5 border border-[#00F0FF]/30">
+                <Loader2 className="w-3 h-3 animate-spin text-[#00F0FF]" />
+                <span>SINCRONIZANDO</span>
+              </span>
+            )}
+            {syncStatus === 'synced' && (
+              <button
+                type="button"
+                onClick={() => setIsDatabaseModalOpen(true)}
+                title={`Dados persistidos no banco SQL com segurança (${lastSyncTime}). Clique para abrir o painel de Banco de Dados.`}
+                className="inline-flex items-center gap-1.5 text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 border border-emerald-500/30 hover:bg-emerald-500/20 transition cursor-pointer"
+              >
+                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                <span>SINCRONIZADO</span>
+                {lastSyncTime && (
+                  <span className="text-[10px] text-emerald-300/70 font-normal">({lastSyncTime})</span>
+                )}
+              </button>
+            )}
+            {syncStatus === 'error' && (
+              <button
+                type="button"
+                onClick={handleRetrySync}
+                title="Erro ao sincronizar com o banco SQL. Clique aqui para tentar novamente."
+                className="inline-flex items-center gap-1.5 text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 border border-rose-500/30 hover:bg-rose-500/20 transition cursor-pointer"
+              >
+                <AlertCircle className="w-3 h-3 text-rose-400 animate-pulse" />
+                <span>ERRO</span>
+                <span className="text-[10px] text-rose-300 underline font-normal ml-0.5">[TENTAR NOVAMENTE]</span>
+              </button>
+            )}
+          </div>
+
+          <span className="text-white/20 hidden sm:inline">//</span>
+
+          <div className="hidden sm:inline">
+            USER: <span className="text-white font-semibold">{currentUser?.displayName || currentUser?.email || 'Rodrigo Rahal Canado'}</span>
+          </div>
         </div>
+
         <div className="label-tech text-white/40 hidden md:block">
-          RACAN HUB NETWORK // 2026.11.06
+          RACAN HUB NETWORK // SQL CLOUD SYNC
         </div>
         <div className="label-tech text-[#00F0FF] font-bold flex items-center gap-1.5">
           <span>SYSTEM READY_</span>
@@ -1418,11 +1529,19 @@ export default function App() {
         isOpen={isDatabaseModalOpen}
         onClose={() => setIsDatabaseModalOpen(false)}
         database={database}
+        syncStatus={syncStatus}
+        onSyncStatusChange={(s) => {
+          setSyncStatus(s);
+          if (s === 'synced') {
+            setLastSyncTime(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+          }
+        }}
         onUpdateDatabase={(updated) => {
           setDatabase(updated);
           saveDatabase(updated);
           const user = auth.currentUser;
           if (user) {
+            setSyncStatus('syncing');
             user.getIdToken().then((idToken) => {
               fetch('/api/cloudsql/sync-all', {
                 method: 'POST',
@@ -1435,8 +1554,19 @@ export default function App() {
                   notes: updated.notes,
                   studySessions: updated.studySessions,
                 }),
-              }).catch(() => {});
-            }).catch(() => {});
+              }).then((res) => {
+                if (res.ok) {
+                  setSyncStatus('synced');
+                  setLastSyncTime(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+                } else {
+                  setSyncStatus('error');
+                }
+              }).catch(() => {
+                setSyncStatus('error');
+              });
+            }).catch(() => {
+              setSyncStatus('error');
+            });
           }
         }}
       />

@@ -32,6 +32,8 @@ interface DatabaseModalProps {
   onClose: () => void;
   database: AppDatabase;
   onUpdateDatabase: (db: AppDatabase) => void;
+  syncStatus?: 'synced' | 'syncing' | 'error';
+  onSyncStatusChange?: (status: 'synced' | 'syncing' | 'error') => void;
 }
 
 export const DatabaseModal: React.FC<DatabaseModalProps> = ({
@@ -39,6 +41,8 @@ export const DatabaseModal: React.FC<DatabaseModalProps> = ({
   onClose,
   database,
   onUpdateDatabase,
+  syncStatus = 'synced',
+  onSyncStatusChange,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [driveUrlInput, setDriveUrlInput] = useState(database.config.googleDriveUrl || 'https://drive.google.com');
@@ -115,6 +119,7 @@ export const DatabaseModal: React.FC<DatabaseModalProps> = ({
       return;
     }
     setIsSyncingCloud(true);
+    onSyncStatusChange?.('syncing');
     try {
       const token = await currentUser.getIdToken();
       const res = await fetch('/api/cloudsql/sync-all', {
@@ -130,8 +135,10 @@ export const DatabaseModal: React.FC<DatabaseModalProps> = ({
         }),
       });
       if (!res.ok) throw new Error('Erro na resposta do servidor');
+      onSyncStatusChange?.('synced');
       showFeedback('Dados enviados para a Nuvem com sucesso!');
     } catch {
+      onSyncStatusChange?.('error');
       showFeedback('Erro ao enviar dados para a nuvem.', true);
     } finally {
       setIsSyncingCloud(false);
@@ -144,6 +151,7 @@ export const DatabaseModal: React.FC<DatabaseModalProps> = ({
       return;
     }
     setIsSyncingCloud(true);
+    onSyncStatusChange?.('syncing');
     try {
       const token = await currentUser.getIdToken();
       const res = await fetch('/api/cloudsql/pull-all', {
@@ -155,6 +163,7 @@ export const DatabaseModal: React.FC<DatabaseModalProps> = ({
       const data = await res.json();
 
       if (!data.certifications?.length && !data.notes?.length) {
+        onSyncStatusChange?.('synced');
         showFeedback('Nenhum dado salvo encontrado na nuvem para este usuário.');
         return;
       }
@@ -171,9 +180,13 @@ export const DatabaseModal: React.FC<DatabaseModalProps> = ({
           studySessions: data.studySessions?.length ? data.studySessions : database.studySessions,
         };
         onUpdateDatabase(updated);
+        onSyncStatusChange?.('synced');
         showFeedback('Dados da nuvem restaurados com sucesso!');
+      } else {
+        onSyncStatusChange?.('synced');
       }
     } catch {
+      onSyncStatusChange?.('error');
       showFeedback('Erro ao puxar dados da nuvem.', true);
     } finally {
       setIsSyncingCloud(false);
@@ -341,16 +354,33 @@ export const DatabaseModal: React.FC<DatabaseModalProps> = ({
 
         {/* Cloud Sync section */}
         <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-3 mb-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
               <Cloud className="w-3.5 h-3.5 text-sky-400" />
               Sincronização em Nuvem (PostgreSQL & Google)
             </span>
-            {currentUser ? (
-              <span className="text-[10px] text-emerald-400 font-medium">Conectado ({currentUser.email || 'Google'})</span>
-            ) : (
-              <span className="text-[10px] text-amber-400 font-medium">Desconectado</span>
-            )}
+            <div className="flex items-center gap-2 font-mono">
+              {syncStatus === 'syncing' && (
+                <span className="text-[10px] text-[#00F0FF] bg-[#00F0FF]/10 px-2 py-0.5 rounded border border-[#00F0FF]/30 flex items-center gap-1">
+                  <Loader2 className="w-2.5 h-2.5 animate-spin" /> Sincronizando
+                </span>
+              )}
+              {syncStatus === 'synced' && (
+                <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
+                  <CheckCircle className="w-2.5 h-2.5" /> Sincronizado
+                </span>
+              )}
+              {syncStatus === 'error' && (
+                <span className="text-[10px] text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30 flex items-center gap-1">
+                  <AlertTriangle className="w-2.5 h-2.5" /> Erro
+                </span>
+              )}
+              {currentUser ? (
+                <span className="text-[10px] text-emerald-400 font-medium">Conectado ({currentUser.email || 'Google'})</span>
+              ) : (
+                <span className="text-[10px] text-amber-400 font-medium">Desconectado</span>
+              )}
+            </div>
           </div>
           <p className="text-[11px] text-slate-400">
             Sincronize suas anotações e certificações diretamente pelo banco de dados na nuvem para não depender de arquivos.
